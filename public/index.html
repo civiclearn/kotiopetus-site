@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kotiopetus</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231F5F8B'/><path d='M8 22V12l8-5 8 5v10' fill='none' stroke='white' stroke-width='2.5' stroke-linejoin='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ===== AUTH ===== -->
+<section id="auth" class="auth" hidden>
+  <div class="auth-card">
+    <div class="brand"><span class="brand-mark"></span><span>kotiopetus.com</span></div>
+    <h1 data-i18n="auth.title">Kotiopetuksen seuranta</h1>
+    <p class="muted" data-i18n="auth.lede">Opetussuunnitelman mukainen edistymisen seuranta perheelle ja tutkivalle opettajalle.</p>
+
+    <form id="login-form" class="stack">
+      <label><span data-i18n="auth.email">Sähköposti</span><input type="email" name="email" required autocomplete="email"></label>
+      <label><span data-i18n="auth.password">Salasana</span><input type="password" name="password" required autocomplete="current-password"></label>
+      <button class="btn primary" type="submit" data-i18n="auth.login">Kirjaudu</button>
+      <button class="btn link" type="button" id="show-signup" data-i18n="auth.toSignup">Uusi käyttäjä? Liity perheeseen liittymiskoodilla</button>
+      <button class="btn link" type="button" id="magic-link" data-i18n="auth.magic">Lähetä kirjautumislinkki sähköpostiin (opettajat)</button>
+    </form>
+
+    <form id="signup-form" class="stack" hidden>
+      <label><span data-i18n="auth.name">Nimi</span><input type="text" name="display_name" required></label>
+      <label><span data-i18n="auth.email">Sähköposti</span><input type="email" name="email" required autocomplete="email"></label>
+      <label><span data-i18n="auth.password">Salasana</span><input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
+      <label><span data-i18n="auth.joinCode">Perheen liittymiskoodi</span><input type="text" name="join_code" required style="text-transform:uppercase"></label>
+      <label><span data-i18n="auth.role">Rooli</span>
+        <select name="role"><option value="parent" data-i18n="role.parent">Vanhempi</option><option value="student" data-i18n="role.student">Oppilas</option></select></label>
+      <button class="btn primary" type="submit" data-i18n="auth.signup">Luo tunnus</button>
+      <button class="btn link" type="button" id="show-login" data-i18n="auth.toLogin">Onko sinulla jo tunnus? Kirjaudu</button>
+    </form>
+
+    <form id="join-form" class="stack" hidden>
+      <p data-i18n="auth.joinExplain">Tunnuksesi ei vielä kuulu perheeseen. Syötä liittymiskoodi.</p>
+      <label><span data-i18n="auth.name">Nimi</span><input type="text" name="display_name" required></label>
+      <label><span data-i18n="auth.joinCode">Perheen liittymiskoodi</span><input type="text" name="join_code" required style="text-transform:uppercase"></label>
+      <label><span data-i18n="auth.role">Rooli</span>
+        <select name="role"><option value="parent" data-i18n="role.parent">Vanhempi</option><option value="student" data-i18n="role.student">Oppilas</option></select></label>
+      <button class="btn primary" type="submit" data-i18n="auth.join">Liity</button>
+    </form>
+    <p id="auth-msg" class="msg" hidden></p>
+    <p class="lang-row"><button class="btn link" data-lang="fi">suomi</button> · <button class="btn link" data-lang="en">English</button></p>
+  </div>
+</section>
+
+<!-- ===== APP ===== -->
+<div id="app" hidden>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark"></span><span>kotiopetus</span></div>
+    <nav class="crumbs" id="crumbs"></nav>
+    <div class="topbar-right">
+      <span id="who" class="muted"></span>
+      <button class="btn link" id="lang-toggle">EN</button>
+      <button class="btn link" id="logout" data-i18n="nav.logout">Kirjaudu ulos</button>
+    </div>
+  </header>
+
+  <main id="view" class="page"></main>
+
+  <!-- topic drawer -->
+  <aside id="drawer" class="drawer" hidden>
+    <div class="drawer-head">
+      <div>
+        <div class="eyebrow" id="d-subject"></div>
+        <h2 id="d-title"></h2>
+        <div id="d-codes" class="codes"></div>
+      </div>
+      <button class="btn icon" id="d-close" aria-label="Close">×</button>
+    </div>
+    <div class="drawer-body">
+      <p id="d-summary" class="summary"></p>
+      <details id="d-ops" class="ops"><summary data-i18n="drawer.ops">Opetussuunnitelman tavoitteet</summary><div id="d-ops-body"></div></details>
+
+      <section class="block">
+        <h3 data-i18n="drawer.materials">Tekstit ja materiaalit</h3>
+        <ul id="d-materials" class="list"></ul>
+        <form id="f-material" class="row-form family-only">
+          <input name="title" placeholder="Otsikko" data-i18n-ph="ph.title" required>
+          <input name="url" placeholder="https://…" type="url">
+          <select name="kind"><option value="article">article</option><option value="video">video</option><option value="textbook">textbook</option><option value="worksheet">worksheet</option><option value="sim">simulation</option><option value="course_unit">OSSD/GCSE unit</option><option value="other">other</option></select>
+          <button class="btn small" type="submit" data-i18n="btn.add">Lisää</button>
+        </form>
+      </section>
+
+      <section class="block">
+        <h3 data-i18n="drawer.tests">Testit</h3>
+        <ul id="d-tests" class="list"></ul>
+        <form id="f-test" class="row-form family-only">
+          <input name="title" placeholder="Testin nimi" data-i18n-ph="ph.testTitle" required>
+          <input name="quiz_id" placeholder="SofiaTests quiz_id" >
+          <input name="url" placeholder="https://…" type="url">
+          <button class="btn small" type="submit" data-i18n="btn.add">Lisää</button>
+        </form>
+      </section>
+
+      <section class="block">
+        <h3 data-i18n="drawer.evidence">Näytöt</h3>
+        <ul id="d-evidence" class="list"></ul>
+        <form id="f-evidence" class="row-form family-only">
+          <input name="caption" placeholder="Kuvaus" data-i18n-ph="ph.caption" required>
+          <select name="kind"><option value="video">video</option><option value="audio">audio</option><option value="photo">photo</option><option value="document">document</option><option value="certificate">certificate</option><option value="link">link</option></select>
+          <input name="file" type="file">
+          <input name="url" placeholder="tai linkki / or link" type="url">
+          <button class="btn small" type="submit" data-i18n="btn.upload">Tallenna</button>
+        </form>
+      </section>
+
+      <section class="block">
+        <h3 data-i18n="drawer.notes">Muistiinpanot</h3>
+        <ul id="d-notes" class="list notes"></ul>
+        <form id="f-note" class="stack">
+          <textarea name="body" rows="2" placeholder="Muistiinpano…" data-i18n-ph="ph.note" required></textarea>
+          <div class="row">
+            <label class="check family-only"><input type="checkbox" name="teacher_visible" checked> <span data-i18n="note.visible">Näkyy opettajalle</span></label>
+            <button class="btn small" type="submit" data-i18n="btn.save">Tallenna</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="block family-only">
+        <h3 data-i18n="drawer.log">Opiskeluaika</h3>
+        <form id="f-log" class="row-form">
+          <input name="minutes" type="number" min="5" step="5" value="30" style="width:90px"> <span data-i18n="log.min">min</span>
+          <input name="logged_on" type="date">
+          <button class="btn small" type="submit" data-i18n="btn.log">Kirjaa</button>
+        </form>
+        <p class="muted" id="d-minutes"></p>
+      </section>
+
+      <section class="block family-only">
+        <h3 data-i18n="drawer.plan">Suunnittelu</h3>
+        <form id="f-plan" class="row-form">
+          <label><span data-i18n="plan.week">Viikko</span> <input name="planned_week" type="number" min="1" max="53" style="width:80px"></label>
+          <label class="check"><input type="checkbox" name="local_ops_confirmed"> <span data-i18n="plan.confirmed">Vahvistettu kunnan OPS:n mukaan</span></label>
+          <label class="check"><input type="checkbox" name="archived"> <span data-i18n="plan.archived">Ei tänä vuonna</span></label>
+          <button class="btn small" type="submit" data-i18n="btn.save">Tallenna</button>
+        </form>
+      </section>
+    </div>
+  </aside>
+  <div id="scrim" class="scrim" hidden></div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
