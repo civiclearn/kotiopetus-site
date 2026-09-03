@@ -17,7 +17,7 @@ function applyLang() {
   $$("[data-i18n-ph]").forEach(el => el.placeholder = t(el.dataset.i18nPh));
   $("#lang-toggle").textContent = lang === "fi" ? "EN" : "FI";
 }
-function setLang(l) { lang = l; localStorage.setItem("ks_lang", l); applyLang(); render(); }
+function setLang(l) { lang = l; localStorage.setItem("ks_lang", l); applyLang(); if (S.plan) render(); }
 const name = row => lang === "fi" ? (row.title_fi || row.name_fi || row.short_fi) : (row.title_en || row.name_en || row.short_en || row.title_fi || row.name_fi);
 
 // ---------- state ----------
@@ -72,7 +72,7 @@ async function boot() {
   if (session) start(); else showAuth();
 }
 function authMsg(m, ok) { const el = $("#auth-msg"); el.textContent = m; el.hidden = false; el.style.color = ok ? "var(--ok)" : "var(--bad)"; }
-function showAuth() { $("#auth").hidden = false; $("#app").hidden = true; }
+function showAuth() { $("#auth").hidden = false; $("#app").hidden = true; document.documentElement.classList.add("on-landing"); }
 async function joinFamily(code, role, display_name) {
   const { error } = await sb.rpc("ks_join_family", { p_code: code, p_role: role, p_display_name: display_name, p_ui_lang: lang });
   if (error) throw error;
@@ -102,7 +102,7 @@ async function start() {
   const { data: plans } = await sb.from("ks_plans").select("*, ks_students(first_name)").eq("family_id", famId).order("school_year", { ascending: false }).limit(1);
   S.plan = plans?.[0] || null; S.student = S.plan?.ks_students;
   const { data: subs } = await sb.from("ks_subjects").select("*").order("sort"); S.subjects = subs || [];
-  $("#auth").hidden = true; $("#app").hidden = false;
+  $("#auth").hidden = true; $("#app").hidden = false; document.documentElement.classList.remove("on-landing");
   $("#who").textContent = `${prof.display_name} · ${t("role." + prof.role)}`;
   $$(".family-only").forEach(el => el.hidden = !isFamily());
   window.onhashchange = render; render();

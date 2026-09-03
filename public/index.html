@@ -12,42 +12,95 @@
 </head>
 <body>
 
-<!-- ===== AUTH ===== -->
-<section id="auth" class="auth" hidden>
-  <div class="auth-card">
+<!-- ===== LANDING + AUTH ===== -->
+<section id="auth" class="landing" hidden>
+  <header class="l-top">
     <div class="brand"><span class="brand-mark"></span><span>kotiopetus.com</span></div>
-    <h1 data-i18n="auth.title">Kotiopetuksen seuranta</h1>
-    <p class="muted" data-i18n="auth.lede">Opetussuunnitelman mukainen edistymisen seuranta perheelle ja tutkivalle opettajalle.</p>
+    <nav class="l-nav">
+      <a href="#miten" data-i18n="l.nav.how">Miten se toimii</a>
+      <a href="#opettajalle" data-i18n="l.nav.teacher">Tutkivalle opettajalle</a>
+      <a href="#ops" data-i18n="l.nav.ops">Opetussuunnitelma</a>
+      <span class="lang-sw"><button class="btn link" data-lang="fi">FI</button><span class="muted">·</span><button class="btn link" data-lang="en">EN</button></span>
+    </nav>
+  </header>
 
-    <form id="login-form" class="stack">
-      <label><span data-i18n="auth.email">Sähköposti</span><input type="email" name="email" required autocomplete="email"></label>
-      <label><span data-i18n="auth.password">Salasana</span><input type="password" name="password" required autocomplete="current-password"></label>
-      <button class="btn primary" type="submit" data-i18n="auth.login">Kirjaudu</button>
-            <button class="btn link" type="button" id="magic-link" data-i18n="auth.magic">Lähetä kirjautumislinkki sähköpostiin (opettajat)</button>
-    </form>
-
-    <form id="signup-form" class="stack" hidden>
-      <label><span data-i18n="auth.name">Nimi</span><input type="text" name="display_name" required></label>
-      <label><span data-i18n="auth.email">Sähköposti</span><input type="email" name="email" required autocomplete="email"></label>
-      <label><span data-i18n="auth.password">Salasana</span><input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
-      <label><span data-i18n="auth.joinCode">Perheen liittymiskoodi</span><input type="text" name="join_code" required style="text-transform:uppercase"></label>
-      <label><span data-i18n="auth.role">Rooli</span>
-        <select name="role"><option value="parent" data-i18n="role.parent">Vanhempi</option><option value="student" data-i18n="role.student">Oppilas</option></select></label>
-      <button class="btn primary" type="submit" data-i18n="auth.signup">Luo tunnus</button>
-      <button class="btn link" type="button" id="show-login" data-i18n="auth.toLogin">Onko sinulla jo tunnus? Kirjaudu</button>
-    </form>
-
-    <form id="join-form" class="stack" hidden>
-      <p data-i18n="auth.joinExplain">Tunnuksesi ei vielä kuulu perheeseen. Syötä liittymiskoodi.</p>
-      <label><span data-i18n="auth.name">Nimi</span><input type="text" name="display_name" required></label>
-      <label><span data-i18n="auth.joinCode">Perheen liittymiskoodi</span><input type="text" name="join_code" required style="text-transform:uppercase"></label>
-      <label><span data-i18n="auth.role">Rooli</span>
-        <select name="role"><option value="parent" data-i18n="role.parent">Vanhempi</option><option value="student" data-i18n="role.student">Oppilas</option></select></label>
-      <button class="btn primary" type="submit" data-i18n="auth.join">Liity</button>
-    </form>
-    <p id="auth-msg" class="msg" hidden></p>
-    <p class="lang-row"><button class="btn link" data-lang="fi">suomi</button> · <button class="btn link" data-lang="en">English</button></p>
+  <div class="l-hero">
+    <div class="l-hero-text">
+      <div class="eyebrow" data-i18n="l.eyebrow">Kotiopetuksen seuranta · POPS 2014</div>
+      <h1 data-i18n="l.h1">Kotiopetus, joka näkyy opetussuunnitelman kielellä.</h1>
+      <p class="lede" data-i18n="l.lede">Perhe suunnittelee ja dokumentoi oppimisen aihe kerrallaan. Jokainen aihe on sidottu perusopetuksen opetussuunnitelman tavoitteisiin ja sisältöalueisiin, joten tutkiva opettaja näkee edistymisen samoilla T- ja S-koodeilla, joita hän käyttää itse.</p>
+      <ul class="l-points">
+        <li data-i18n="l.p1">Kaikki perusopetuksen oppiaineet vuosiluokille 7–9, aiheet valmiina</li>
+        <li data-i18n="l.p2">Tekstit, testit, näytöt ja muistiinpanot yhdessä näkymässä — värikoodattu edistyminen</li>
+        <li data-i18n="l.p3">Tutkivalle opettajalle oma lukuoikeus, tavoitekartta ja tulostettava lukuvuosiraportti</li>
+      </ul>
+    </div>
+    <div class="auth-card">
+      <h2 data-i18n="auth.login">Kirjaudu</h2>
+      <form id="login-form" class="stack">
+        <label><span data-i18n="auth.email">Sähköposti</span><input type="email" name="email" required autocomplete="email"></label>
+        <label><span data-i18n="auth.password">Salasana</span><input type="password" name="password" required autocomplete="current-password"></label>
+        <button class="btn primary" type="submit" data-i18n="auth.login">Kirjaudu</button>
+        <button class="btn link" type="button" id="magic-link" data-i18n="auth.magic">Lähetä kirjautumislinkki sähköpostiin (opettajat)</button>
+      </form>
+      <form id="signup-form" class="stack" hidden>
+        <label><span data-i18n="auth.name">Nimi</span><input type="text" name="display_name" required></label>
+        <label><span data-i18n="auth.email">Sähköposti</span><input type="email" name="email" required autocomplete="email"></label>
+        <label><span data-i18n="auth.password">Salasana</span><input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
+        <label><span data-i18n="auth.joinCode">Perheen liittymiskoodi</span><input type="text" name="join_code" required style="text-transform:uppercase"></label>
+        <label><span data-i18n="auth.role">Rooli</span>
+          <select name="role"><option value="parent" data-i18n="role.parent">Vanhempi</option><option value="student" data-i18n="role.student">Oppilas</option></select></label>
+        <button class="btn primary" type="submit" data-i18n="auth.signup">Luo tunnus</button>
+        <button class="btn link" type="button" id="show-login" data-i18n="auth.toLogin">Onko sinulla jo tunnus? Kirjaudu</button>
+      </form>
+      <form id="join-form" class="stack" hidden>
+        <p data-i18n="auth.joinExplain">Tunnuksesi ei vielä kuulu perheeseen. Syötä liittymiskoodi.</p>
+        <label><span data-i18n="auth.name">Nimi</span><input type="text" name="display_name" required></label>
+        <label><span data-i18n="auth.joinCode">Perheen liittymiskoodi</span><input type="text" name="join_code" required style="text-transform:uppercase"></label>
+        <label><span data-i18n="auth.role">Rooli</span>
+          <select name="role"><option value="parent" data-i18n="role.parent">Vanhempi</option><option value="student" data-i18n="role.student">Oppilas</option></select></label>
+        <button class="btn primary" type="submit" data-i18n="auth.join">Liity</button>
+      </form>
+      <p id="auth-msg" class="msg" hidden></p>
+      <p class="auth-foot muted" data-i18n="l.access">Perheiden tunnukset avataan lukuvuosikohtaisesti. Tutkiva opettaja saa kutsun perheeltä ja kirjautuu sähköpostilinkillä.</p>
+    </div>
   </div>
+
+  <section class="l-section" id="miten">
+    <h2 data-i18n="l.how.h">Miten se toimii</h2>
+    <div class="l-steps">
+      <div class="l-step"><div class="l-step-n">1</div><h3 data-i18n="l.how.1h">Aiheet valmiina</h3><p data-i18n="l.how.1p">Vuosiluokan oppiaineet on jaettu aiheisiin — esimerkiksi matematiikassa 25 aihetta luonnollisista luvuista tilastoihin. Jokaisessa on OPS-koodit, tekstit ja testi.</p></div>
+      <div class="l-step"><div class="l-step-n">2</div><h3 data-i18n="l.how.2h">Opiskelu dokumentoituu</h3><p data-i18n="l.how.2p">Luettu teksti merkitään, testi tehdään sivustolla ja tulos tallentuu, näytöt — videot, kuvat, kirjoitelmat — ladataan aiheen kohdalle. Aihe vaihtaa väriä sen mukaan, mitä on tehty.</p></div>
+      <div class="l-step"><div class="l-step-n">3</div><h3 data-i18n="l.how.3h">Opettaja näkee kokonaisuuden</h3><p data-i18n="l.how.3p">Tutkiva opettaja kirjautuu omalla tunnuksellaan, näkee edistymisen oppiaine ja tavoite kerrallaan, kommentoi ja tulostaa lukuvuosiraportin.</p></div>
+    </div>
+  </section>
+
+  <section class="l-section l-two" id="opettajalle">
+    <div>
+      <h2 data-i18n="l.t.h">Tutkivalle opettajalle</h2>
+      <p data-i18n="l.t.p1">Kotiopetuksen edistymisen tutkiminen on helpompaa, kun perheen työ on järjestetty opetussuunnitelman rakenteen mukaan. Tavoitekartta näyttää jokaisen oppiaineen tavoitteet (T1…) ja sisältöalueet (S1…) sekä sen, mitkä aiheet, testit ja näytöt niitä palvelevat.</p>
+      <p data-i18n="l.t.p2">Kaikki näkyy lukuoikeudella: ei muokattavaa, ei asennettavaa. Kommentit tallentuvat suoraan aiheen kohdalle, ja lukuvuosiraportti kokoaa tavoitteiden kattavuuden, testitulokset, näytöt ja opiskeluajan yhdelle tulostettavalle sivulle.</p>
+    </div>
+    <div class="l-card">
+      <div class="eyebrow" data-i18n="l.t.card.e">Esimerkki · Matematiikka T11</div>
+      <p class="l-card-q">ohjata oppilasta kehittämään kykyään laskea peruslaskutoimituksia rationaaliluvuilla</p>
+      <div class="l-card-row"><span class="chip ops">S2</span><span class="chip ops">T11</span><span class="chip ok" data-i18n="l.t.card.done">2 aihetta valmis</span><span class="chip warn" data-i18n="l.t.card.prog">1 kesken</span></div>
+      <p class="muted small" data-i18n="l.t.card.crit">Päättöarvioinnin kriteerit arvosanoille 5, 7, 8 ja 9 näkyvät aiheen kohdalla suoraan perusteista.</p>
+    </div>
+  </section>
+
+  <section class="l-section" id="ops">
+    <h2 data-i18n="l.ops.h">Perustuu opetussuunnitelman perusteisiin</h2>
+    <p class="l-wide" data-i18n="l.ops.p">Aiheet, tavoitteet, sisältöalueet ja arviointikriteerit on tuotu Opetushallituksen ePerusteet-palvelusta (Perusopetuksen opetussuunnitelman perusteet 2014, vuosiluokat 7–9). Vuosiluokkakohtainen jako perustuu yleiseen käytäntöön ja vahvistetaan kunnan opetussuunnitelman mukaan yhdessä tutkivan opettajan kanssa. Kun uudet perusteet astuvat voimaan 1.8.2028, ne ladataan rinnalle.</p>
+    <div class="l-subjects">
+      <span>Suomi (S2)</span><span>Ruotsi B1</span><span>Englanti</span><span>Matematiikka</span><span>Biologia</span><span>Maantieto</span><span>Fysiikka</span><span>Kemia</span><span>Terveystieto</span><span>Elämänkatsomustieto</span><span>Historia</span><span>Yhteiskuntaoppi</span><span>Musiikki</span><span>Kuvataide</span><span>Käsityö</span><span>Liikunta</span><span>Kotitalous</span><span>Oppilaanohjaus</span>
+    </div>
+  </section>
+
+  <footer class="l-foot">
+    <div class="brand"><span class="brand-mark"></span><span>kotiopetus.com</span></div>
+    <p class="muted" data-i18n="l.foot">Kotiopetuksen seurantapalvelu perheille ja tutkiville opettajille. Yhteys: info@kotiopetus.com</p>
+  </footer>
 </section>
 
 <!-- ===== APP ===== -->
