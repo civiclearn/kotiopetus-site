@@ -32,7 +32,7 @@ async function boot() {
   applyLang();
   $$("[data-lang]").forEach(b => b.onclick = () => setLang(b.dataset.lang));
   $("#lang-toggle").onclick = () => setLang(lang === "fi" ? "en" : "fi");
-  const sl = $("#show-login"); if (sl) sl.onclick = () => { $("#signup-form").hidden = true; $("#login-form").hidden = false; };
+  $("#show-login").onclick = () => { $("#request-form").hidden = true; $("#login-form").hidden = false; $("#auth-msg").hidden = true; };
   // password change (accounts are created by the family admin / bootstrap, so this is how first passwords get replaced)
   $("#change-pw").onclick = () => { $("#f-pw").reset(); $("#pw-msg").hidden = true; $("#pw-dialog").showModal(); };
   $("#pw-cancel").onclick = () => $("#pw-dialog").close();
@@ -51,17 +51,12 @@ async function boot() {
     if (error) return authMsg(error.message);
     start();
   };
-  $("#magic-link").onclick = async () => {
-    const email = $("#login-form [name=email]").value; if (!email) return authMsg(t("auth.email"));
-    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin } });
-    authMsg(error ? error.message : t("auth.magicSent"), !error);
-  };
-  $("#signup-form").onsubmit = async e => {
+  $("#show-request").onclick = () => { $("#login-form").hidden = true; $("#request-form").hidden = false; $("#auth-msg").hidden = true; };
+  $("#request-form").onsubmit = async e => {
     e.preventDefault(); const f = new FormData(e.target);
-    const { data, error } = await sb.auth.signUp({ email: f.get("email"), password: f.get("password"), options: { data: { display_name: f.get("display_name") } } });
+    const { error } = await sb.from("ks_signup_requests").insert({ parent_name: f.get("parent_name"), email: f.get("email"), municipality: f.get("municipality") || null, child_grade: +f.get("child_grade"), message: f.get("message") || null, ui_lang: lang });
     if (error) return authMsg(error.message);
-    if (data.session) { await joinFamily(f.get("join_code"), f.get("role"), f.get("display_name")); start(); }
-    else { localStorage.setItem("ks_pending_join", JSON.stringify({ code: f.get("join_code"), role: f.get("role"), name: f.get("display_name") })); authMsg(t("auth.confirmSent"), true); }
+    e.target.hidden = true; $("#login-form").hidden = false; authMsg(t("auth.requestSent"), true);
   };
   $("#join-form").onsubmit = async e => {
     e.preventDefault(); const f = new FormData(e.target);
@@ -91,7 +86,7 @@ async function start() {
     if (ta && ta.length) {
       await sb.from("ks_profiles").insert({ user_id: user.id, role: "teacher", display_name: user.user_metadata?.display_name || user.email, ui_lang: "fi" });
       ({ data: prof } = await sb.from("ks_profiles").select("*").eq("user_id", user.id).maybeSingle());
-    } else { $("#auth").hidden = false; $("#login-form").hidden = true; $("#signup-form").hidden = true; $("#join-form").hidden = false; return; }
+    } else { $("#auth").hidden = false; $("#login-form").hidden = true; $("#request-form").hidden = true; $("#join-form").hidden = false; return; }
   }
   S.profile = prof; S.teacher = prof.role === "teacher";
   if (prof.ui_lang && prof.ui_lang !== lang && !localStorage.getItem("ks_lang")) { lang = prof.ui_lang; localStorage.setItem("ks_lang", lang); applyLang(); }

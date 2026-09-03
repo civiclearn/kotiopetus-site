@@ -27,8 +27,8 @@
   <div class="l-hero">
     <div class="l-hero-text">
       <div class="eyebrow" data-i18n="l.eyebrow">Kotiopetuksen seuranta · POPS 2014</div>
-      <h1 data-i18n="l.h1">Kotiopetus, joka näkyy opetussuunnitelman kielellä.</h1>
-      <p class="lede" data-i18n="l.lede">Perhe suunnittelee ja dokumentoi oppimisen aihe kerrallaan. Jokainen aihe on sidottu perusopetuksen opetussuunnitelman tavoitteisiin ja sisältöalueisiin, joten tutkiva opettaja näkee edistymisen samoilla T- ja S-koodeilla, joita hän käyttää itse.</p>
+      <h1 data-i18n="l.h1">Järjestä kotiopetus Suomessa.</h1>
+      <p class="lede" data-i18n="l.lede">Yksi paikka perheen kotiopetukselle: aiheet, tekstit, testit, näytöt ja muistiinpanot lukuvuoden alusta loppuun. Kaikki on sidottu perusopetuksen opetussuunnitelman perusteisiin, joten edistyminen on selvää sekä perheelle että tutkivalle opettajalle.</p>
       <ul class="l-points">
         <li data-i18n="l.p1">Kaikki perusopetuksen oppiaineet vuosiluokille 7–9, aiheet valmiina</li>
         <li data-i18n="l.p2">Tekstit, testit, näytöt ja muistiinpanot yhdessä näkymässä — värikoodattu edistyminen</li>
@@ -41,16 +41,17 @@
         <label><span data-i18n="auth.email">Sähköposti</span><input type="email" name="email" required autocomplete="email"></label>
         <label><span data-i18n="auth.password">Salasana</span><input type="password" name="password" required autocomplete="current-password"></label>
         <button class="btn primary" type="submit" data-i18n="auth.login">Kirjaudu</button>
-        <button class="btn link" type="button" id="magic-link" data-i18n="auth.magic">Lähetä kirjautumislinkki sähköpostiin (opettajat)</button>
+        <button class="btn link" type="button" id="show-request" data-i18n="auth.toRequest">Uusi perhe? Pyydä tunnukset</button>
       </form>
-      <form id="signup-form" class="stack" hidden>
-        <label><span data-i18n="auth.name">Nimi</span><input type="text" name="display_name" required></label>
+      <form id="request-form" class="stack" hidden>
+        <p class="muted small" data-i18n="auth.requestExplain">Jätä yhteystietosi. Avaamme perheen tunnukset lukuvuodeksi ja otamme yhteyttä sähköpostilla.</p>
+        <label><span data-i18n="auth.name">Nimi</span><input type="text" name="parent_name" required></label>
         <label><span data-i18n="auth.email">Sähköposti</span><input type="email" name="email" required autocomplete="email"></label>
-        <label><span data-i18n="auth.password">Salasana</span><input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
-        <label><span data-i18n="auth.joinCode">Perheen liittymiskoodi</span><input type="text" name="join_code" required style="text-transform:uppercase"></label>
-        <label><span data-i18n="auth.role">Rooli</span>
-          <select name="role"><option value="parent" data-i18n="role.parent">Vanhempi</option><option value="student" data-i18n="role.student">Oppilas</option></select></label>
-        <button class="btn primary" type="submit" data-i18n="auth.signup">Luo tunnus</button>
+        <label><span data-i18n="auth.municipality">Kunta</span><input type="text" name="municipality"></label>
+        <label><span data-i18n="auth.grade">Lapsen vuosiluokka</span>
+          <select name="child_grade"><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="6">6</option><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select></label>
+        <label><span data-i18n="auth.message">Viesti (valinnainen)</span><textarea name="message" rows="2"></textarea></label>
+        <button class="btn primary" type="submit" data-i18n="auth.request">Lähetä pyyntö</button>
         <button class="btn link" type="button" id="show-login" data-i18n="auth.toLogin">Onko sinulla jo tunnus? Kirjaudu</button>
       </form>
       <form id="join-form" class="stack" hidden>
@@ -62,7 +63,7 @@
         <button class="btn primary" type="submit" data-i18n="auth.join">Liity</button>
       </form>
       <p id="auth-msg" class="msg" hidden></p>
-      <p class="auth-foot muted" data-i18n="l.access">Perheiden tunnukset avataan lukuvuosikohtaisesti. Tutkiva opettaja saa kutsun perheeltä ja kirjautuu sähköpostilinkillä.</p>
+      <p class="auth-foot muted" data-i18n="l.access">Perheiden tunnukset avataan lukuvuosikohtaisesti. Tutkiva opettaja saa kutsun perheeltä sähköpostiin.</p>
     </div>
   </div>
 
