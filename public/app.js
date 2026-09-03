@@ -32,8 +32,17 @@ async function boot() {
   applyLang();
   $$("[data-lang]").forEach(b => b.onclick = () => setLang(b.dataset.lang));
   $("#lang-toggle").onclick = () => setLang(lang === "fi" ? "en" : "fi");
-  $("#show-signup").onclick = () => { $("#login-form").hidden = true; $("#signup-form").hidden = false; };
-  $("#show-login").onclick = () => { $("#signup-form").hidden = true; $("#login-form").hidden = false; };
+  const sl = $("#show-login"); if (sl) sl.onclick = () => { $("#signup-form").hidden = true; $("#login-form").hidden = false; };
+  // password change (accounts are created by the family admin / bootstrap, so this is how first passwords get replaced)
+  $("#change-pw").onclick = () => { $("#f-pw").reset(); $("#pw-msg").hidden = true; $("#pw-dialog").showModal(); };
+  $("#pw-cancel").onclick = () => $("#pw-dialog").close();
+  $("#f-pw").onsubmit = async e => {
+    e.preventDefault(); const f = new FormData(e.target);
+    if (f.get("p1") !== f.get("p2")) { const m = $("#pw-msg"); m.textContent = t("pw.mismatch"); m.hidden = false; return; }
+    const { error } = await sb.auth.updateUser({ password: f.get("p1") });
+    if (error) { const m = $("#pw-msg"); m.textContent = error.message; m.hidden = false; return; }
+    $("#pw-dialog").close(); toast(t("pw.done"));
+  };
   $("#logout").onclick = async () => { await sb.auth.signOut(); location.hash = ""; location.reload(); };
 
   $("#login-form").onsubmit = async e => {

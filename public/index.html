@@ -22,8 +22,7 @@
       <label><span data-i18n="auth.email">Sähköposti</span><input type="email" name="email" required autocomplete="email"></label>
       <label><span data-i18n="auth.password">Salasana</span><input type="password" name="password" required autocomplete="current-password"></label>
       <button class="btn primary" type="submit" data-i18n="auth.login">Kirjaudu</button>
-      <button class="btn link" type="button" id="show-signup" data-i18n="auth.toSignup">Uusi käyttäjä? Liity perheeseen liittymiskoodilla</button>
-      <button class="btn link" type="button" id="magic-link" data-i18n="auth.magic">Lähetä kirjautumislinkki sähköpostiin (opettajat)</button>
+            <button class="btn link" type="button" id="magic-link" data-i18n="auth.magic">Lähetä kirjautumislinkki sähköpostiin (opettajat)</button>
     </form>
 
     <form id="signup-form" class="stack" hidden>
@@ -58,6 +57,7 @@
     <div class="topbar-right">
       <span id="who" class="muted"></span>
       <button class="btn link" id="lang-toggle">EN</button>
+      <button class="btn link" id="change-pw" data-i18n="nav.changePw">Vaihda salasana</button>
       <button class="btn link" id="logout" data-i18n="nav.logout">Kirjaudu ulos</button>
     </div>
   </header>
@@ -148,6 +148,15 @@
   <div id="scrim" class="scrim" hidden></div>
 </div>
 
+<dialog id="pw-dialog" class="dialog">
+  <form id="f-pw" method="dialog" class="stack">
+    <h2 data-i18n="pw.title">Vaihda salasana</h2>
+    <label><span data-i18n="pw.new">Uusi salasana (vähintään 8 merkkiä)</span><input type="password" name="p1" minlength="8" required autocomplete="new-password"></label>
+    <label><span data-i18n="pw.repeat">Toista salasana</span><input type="password" name="p2" minlength="8" required autocomplete="new-password"></label>
+    <p id="pw-msg" class="msg" hidden></p>
+    <div class="row"><button class="btn primary" type="submit" data-i18n="btn.save">Tallenna</button><button class="btn" type="button" id="pw-cancel" data-i18n="btn.cancel">Peruuta</button></div>
+  </form>
+</dialog>
 <div id="toast" class="toast" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>

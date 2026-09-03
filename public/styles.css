@@ -114,3 +114,6 @@ td.status{width:10px;padding-right:0}
 .week-list li{display:flex;gap:10px;align-items:center;font-family:var(--sans);font-size:.9rem;cursor:pointer}
 .week-list li:hover{color:var(--accent)}
 @media (max-width:640px){.page{padding:18px 14px 60px}.topbar{padding:10px 14px}.crumbs{display:none}}
+
+.dialog{border:1px solid var(--line);border-radius:10px;padding:24px;background:var(--surface);color:var(--ink);width:min(420px,92vw)}
+.dialog::backdrop{background:rgba(0,0,0,.3)}
