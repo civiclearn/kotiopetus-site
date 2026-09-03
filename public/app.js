@@ -184,7 +184,7 @@ function topicRow(tp, areaIds, note) {
   const ev = tp.evidence ? `<span class="chip evid">${tp.evidence}</span>` : `<span class="muted">—</span>`;
   return `<tr class="topic ${tp.archived ? "archived" : ""}" data-id="${tp.topic_id}">
     <td class="status"><span class="stripe s-${tp.status}"></span></td>
-    <td><span class="topic-title">${esc(name(tp))}<small>${esc(lang === "fi" ? tp.title_en : tp.title_fi)}</small></span>${tp.grade_flag ? `<span class="chip flag">${esc(tp.grade_flag)}</span>` : ""}</td>
+    <td><span class="topic-title">${esc(name(tp))}<small lang="${lang === "fi" ? "en" : "fi"}">${esc(lang === "fi" ? tp.title_en : tp.title_fi)}</small></span>${tp.grade_flag ? `<span class="chip flag">${esc(tp.grade_flag)}</span>` : ""}</td>
     <td>${codes}</td><td>${mats}</td><td>${tests}</td><td>${ev}</td>
     <td class="num">${tp.planned_week || ""}</td>
     <td class="note-cell">${note ? esc(note.body.slice(0, 90)) + (note.author_role === "teacher" ? ` <span class="chip warn">${t("note.teacher")}</span>` : "") : ""}</td></tr>`;
