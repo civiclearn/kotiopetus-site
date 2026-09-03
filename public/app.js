@@ -111,6 +111,8 @@ async function start() {
 // ---------- router ----------
 async function render() {
   if (!S.plan) { $("#view").innerHTML = `<p class="muted">${t("dash.noPlan")}</p>`; return; }
+  const qz = location.hash.match(/^#\/quiz\/([0-9a-f-]+)/);
+  if (qz) { closeDrawer(); return renderQuiz(qz[1]); }
   const m = location.hash.match(/^#\/subject\/(\d+)(?:\/topic\/([0-9a-f-]+))?/);
   if (m) { await renderSubject(+m[1]); if (m[2]) openDrawer(m[2]); else closeDrawer(); }
   else { closeDrawer(); await renderDashboard(); }
@@ -190,6 +192,52 @@ function topicRow(tp, areaIds, note) {
     <td class="note-cell">${note ? esc(note.body.slice(0, 90)) + (note.author_role === "teacher" ? ` <span class="chip warn">${t("note.teacher")}</span>` : "") : ""}</td></tr>`;
 }
 
+// ---------- quiz player ----------
+async function renderQuiz(testId) {
+  const { data: test, error } = await sb.from("ks_tests").select("*, ks_quizzes(*, ks_quiz_questions(*)), ks_topics(title_en,title_fi,subject_id)").eq("id", testId).single();
+  if (error || !test?.ks_quizzes) return fail(error || new Error("No quiz"));
+  const quiz = test.ks_quizzes, qs = (quiz.ks_quiz_questions || []).sort((a, b) => a.seq - b.seq);
+  const subj = S.subjects.find(s => s.id === test.ks_topics.subject_id);
+  crumbs([{ label: t("nav.home"), href: "#/" }, { label: name(subj), href: "#/subject/" + subj.id }, { label: name(test.ks_topics), href: `#/subject/${subj.id}/topic/${test.topic_id}` }, { label: quiz.code }]);
+  const prompt = q => lang === "fi" && q.prompt_fi ? `${esc(q.prompt_fi)}<small>${esc(q.prompt_en)}</small>` : `${esc(q.prompt_en)}${q.prompt_fi ? `<small lang="fi">${esc(q.prompt_fi)}</small>` : ""}`;
+  const opts = q => (lang === "fi" && q.options_fi) ? q.options_fi : q.options;
+  $("#view").innerHTML = `
+    <div class="plan-head"><h1>${esc(quiz.code)} · ${esc(name(quiz))}</h1><span class="meta">${qs.length} ${t("quiz.questions")} · ${t("quiz.pass")} ${test.pass_pct || quiz.pass_pct || S.plan.pass_pct} %${quiz.criteria_grade ? ` · ${t("ops.grade")} ${quiz.criteria_grade}` : ""}</span></div>
+    ${quiz.intro_en ? `<p class="summary">${esc(lang === "fi" && quiz.intro_fi ? quiz.intro_fi : quiz.intro_en)}</p>` : ""}
+    <form id="quiz-form" class="quiz">
+      ${qs.map((q, i) => `<fieldset class="q" data-id="${q.id}" data-kind="${q.kind}"><legend><span class="num">${i + 1}.</span> ${prompt(q)}</legend>
+        ${q.kind === "mc" ? opts(q).map((o, j) => `<label class="opt"><input type="radio" name="q${i}" value="${j}"> <span>${esc(o)}</span></label>`).join("") : ""}
+        ${q.kind === "multi" ? opts(q).map((o, j) => `<label class="opt"><input type="checkbox" name="q${i}" value="${j}"> <span>${esc(o)}</span></label>`).join("") : ""}
+        ${q.kind === "numeric" ? `<input type="text" inputmode="decimal" name="q${i}" class="ans" autocomplete="off">` : ""}
+        ${q.kind === "short" ? `<input type="text" name="q${i}" class="ans" autocomplete="off">` : ""}
+        <div class="feedback" hidden></div></fieldset>`).join("")}
+      <div class="row"><button class="btn primary" type="submit">${t("quiz.submit")}</button><a class="btn" href="#/subject/${subj.id}/topic/${test.topic_id}">${t("btn.cancel")}</a></div>
+    </form>
+    <div id="quiz-result" class="result" hidden></div>`;
+  $("#quiz-form").onsubmit = async e => {
+    e.preventDefault();
+    const answers = {};
+    $$("fieldset.q").forEach(fs => {
+      const kind = fs.dataset.kind, id = fs.dataset.id;
+      if (kind === "mc") { const c = $("input:checked", fs); if (c) answers[id] = +c.value; }
+      else if (kind === "multi") { answers[id] = $$("input:checked", fs).map(x => +x.value); }
+      else { const v = $("input", fs).value.trim().replace(",", "."); if (v !== "") answers[id] = kind === "numeric" ? (isNaN(+v) ? v : +v) : v; }
+    });
+    const { data, error } = await sb.rpc("ks_submit_quiz", { p_test: testId, p_answers: answers });
+    if (error) return fail(error);
+    const pass = data.percentage >= data.pass_pct;
+    $("#quiz-result").hidden = false;
+    $("#quiz-result").innerHTML = `<div class="score ${pass ? "ok" : "bad"}"><b>${data.score}/${data.total}</b> · ${data.percentage} % · ${pass ? t("quiz.passed") : t("quiz.failed")}</div>
+      <div class="row"><a class="btn primary" href="#/subject/${subj.id}/topic/${test.topic_id}">${t("quiz.back")}</a><button class="btn" type="button" onclick="location.reload()">${t("quiz.retry")}</button></div>`;
+    data.items.forEach(it => { const fs = $(`fieldset.q[data-id="${it.question_id}"]`); if (!fs) return; fs.classList.add(it.correct ? "correct" : "wrong");
+      const fb = $(".feedback", fs); fb.hidden = false;
+      const ans = typeof it.answer === "object" && it.answer !== null && !Array.isArray(it.answer) ? it.answer.value : Array.isArray(it.answer) ? (fs.dataset.kind === "multi" ? it.answer.map(j => opts(qs.find(q => q.id === it.question_id))[j]).join(", ") : it.answer[0]) : (fs.dataset.kind === "mc" ? opts(qs.find(q => q.id === it.question_id))[it.answer] : it.answer);
+      fb.innerHTML = `${it.correct ? "✓" : "✗"} ${it.correct ? "" : `<b>${t("quiz.answer")}:</b> ${esc(ans)} · `}${esc(it.explanation_en || "")}`;
+      $$("input", fs).forEach(i => i.disabled = true); });
+    $("#quiz-form button[type=submit]").hidden = true; $("#quiz-result").scrollIntoView({ behavior: "smooth" });
+  };
+}
+
 // ---------- drawer ----------
 let D = null; // current topic
 async function openDrawer(topicId) {
@@ -232,9 +280,14 @@ $("#f-material").onsubmit = async e => {
 };
 
 async function loadTests() {
-  const { data } = await sb.from("ks_tests").select("*, ks_test_attempts(percentage,score,total,taken_at,source)").eq("topic_id", D.topic_id).order("created_at");
+  const { data } = await sb.from("ks_tests").select("*, ks_quizzes(code,title_en,title_fi,criteria_grade), ks_test_attempts(percentage,score,total,taken_at,source)").eq("topic_id", D.topic_id).order("created_at");
+  // quiz picker: global quizzes for this topic's template + family quizzes
+  const { data: tpl } = await sb.from("ks_topics").select("template_id").eq("id", D.topic_id).single();
+  const { data: quizzes } = await sb.from("ks_quizzes").select("id,code,title_en,title_fi,template_id,family_id").or(`template_id.eq.${tpl?.template_id || 0},family_id.eq.${S.family.id}`).order("code");
+  const sel = $("#f-test [name=quiz_uuid]"); sel.innerHTML = `<option value="">${t("test.noQuiz")}</option>` + (quizzes || []).map(q => `<option value="${q.id}">${esc(q.code || "")} ${esc(name(q))}</option>`).join("");
   $("#d-tests").innerHTML = (data || []).map(x => { const at = (x.ks_test_attempts || []).sort((a, b) => b.taken_at.localeCompare(a.taken_at)); const best = at.length ? Math.max(...at.map(a => a.percentage)) : null; const pass = x.pass_pct || S.plan.pass_pct;
-    return `<li><span class="grow">${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>` : esc(x.title)} ${x.quiz_id ? `<span class="muted mono">${esc(x.quiz_id)}</span>` : ""}</span>
+    return `<li><span class="grow">${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>` : esc(x.title)} ${x.ks_quizzes ? `<span class="muted mono">${esc(x.ks_quizzes.code)}</span>` : ""}</span>
+      ${x.quiz_uuid && isFamily() ? `<a class="btn small primary" href="#/quiz/${x.id}">${t("test.take")}</a>` : ""}
       ${best !== null ? `<span class="chip ${best >= pass ? "ok" : "bad"} num">${t("test.best")} ${best}%</span><span class="muted num">${at.length} ${t("test.attempts")}</span>` : `<span class="muted">—</span>`}
       ${isFamily() ? `<button class="btn small" data-att="${x.id}">${t("test.logAttempt")}</button><button class="btn link danger small" data-del-test="${x.id}">×</button>` : ""}</li>`; }).join("") || `<li class="muted">—</li>`;
   $$("[data-att]").forEach(b => b.onclick = async () => { const v = prompt(t("test.logAttempt") + " (%)"); if (v === null) return; const pct = parseInt(v, 10); if (isNaN(pct)) return;
@@ -243,7 +296,8 @@ async function loadTests() {
 }
 $("#f-test").onsubmit = async e => {
   e.preventDefault(); const f = new FormData(e.target);
-  const { error } = await sb.from("ks_tests").insert({ family_id: S.family.id, topic_id: D.topic_id, title: f.get("title"), quiz_id: f.get("quiz_id") || null, url: f.get("url") || null });
+  const quiz_uuid = f.get("quiz_uuid") || null; const chosen = quiz_uuid ? $(`#f-test [name=quiz_uuid] option[value="${quiz_uuid}"]`).textContent.trim() : null;
+  const { error } = await sb.from("ks_tests").insert({ family_id: S.family.id, topic_id: D.topic_id, title: f.get("title") || chosen || "Test", quiz_uuid, url: f.get("url") || null });
   if (error) return fail(error); e.target.reset(); toast(t("toast.saved")); loadTests(); refresh();
 };
 

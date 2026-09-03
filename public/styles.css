@@ -117,3 +117,19 @@ td.status{width:10px;padding-right:0}
 
 .dialog{border:1px solid var(--line);border-radius:10px;padding:24px;background:var(--surface);color:var(--ink);width:min(420px,92vw)}
 .dialog::backdrop{background:rgba(0,0,0,.3)}
+
+/* quiz */
+.quiz{display:flex;flex-direction:column;gap:14px;max-width:760px}
+.quiz fieldset.q{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:14px 18px 12px;margin:0}
+.quiz legend{font-family:var(--sans);font-weight:600;font-size:1rem;padding:0 6px}
+.quiz legend small{display:block;font-weight:400;color:var(--ink-3);font-size:.8rem;margin-top:2px}
+.quiz legend .num{color:var(--accent);margin-right:4px}
+.quiz .opt{display:flex;gap:10px;align-items:flex-start;padding:6px 4px;font-size:.95rem;cursor:pointer}
+.quiz .ans{font-family:var(--mono);width:min(260px,100%)}
+.quiz fieldset.correct{border-color:var(--ok);background:var(--ok-soft)}
+.quiz fieldset.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.quiz .feedback{margin-top:8px;font-size:.88rem;color:var(--ink-2)}
+.result{margin-top:20px;display:flex;flex-direction:column;gap:12px;max-width:760px}
+.result .score{font-family:var(--sans);font-size:1.3rem;padding:14px 18px;border-radius:8px;background:var(--code-bg)}
+.result .score.ok{background:var(--ok-soft);color:var(--ok)} .result .score.bad{background:var(--bad-soft);color:var(--bad)}
+.btn.primary[href]{text-decoration:none;display:inline-block}
