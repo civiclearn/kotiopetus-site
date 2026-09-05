@@ -141,6 +141,8 @@ function tile(r) {
     <div class="bar"><i style="width:${r.pct || 0}%"></i></div>
     <div class="nums"><span>${r.done}/${r.topics} ${t("dash.done")}</span>${r.attention ? `<span class="att">${r.attention} ${t("dash.attention")}</span>` : ""}${r.minutes ? `<span>${r.minutes} min</span>` : ""}</div></button>`;
 }
+// school-year order: autumn weeks (>= 32) come before spring weeks; unplanned topics last
+const syOrder = w => w == null ? 999 : (w >= 32 ? w - 32 : w + 21);
 function isoWeek(d) { const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = x.getUTCDay() || 7; x.setUTCDate(x.getUTCDate() + 4 - day); const y0 = new Date(Date.UTC(x.getUTCFullYear(), 0, 1)); return Math.ceil((((x - y0) / 864e5) + 1) / 7); }
 
 // ---------- subject ----------
@@ -148,6 +150,7 @@ async function renderSubject(subjectId) {
   const subj = S.subjects.find(s => s.id === subjectId); if (!subj) return location.hash = "";
   crumbs([{ label: t("nav.home"), href: "#/" }, { label: name(subj) }]);
   const showArchived = sessionStorage.getItem("ks_arch") === "1";
+  const sortMode = sessionStorage.getItem("ks_sort") || "week";
   const [{ data: topics, error }, { data: areas }, { data: ta }, { data: notes }] = await Promise.all([
     sb.from("ks_topic_status").select("*").eq("plan_id", S.plan.id).eq("subject_id", subjectId).order("seq"),
     sb.from("ks_content_areas").select("id,code,name_fi,name_en,description_fi").eq("subject_id", subjectId).order("sort"),
@@ -163,18 +166,31 @@ async function renderSubject(subjectId) {
   const groups = new Map(); (areas || []).forEach(a => groups.set(a.id, [])); groups.set(0, []);
   topics.forEach(tp => { if (tp.archived && !showArchived) return; const first = (topicAreas[tp.topic_id] || []).sort((a, b) => (S.areas[a]?.code || "").localeCompare(S.areas[b]?.code || ""))[0]; groups.get(first || 0).push(tp); });
   const rows = [];
-  for (const [aid, list] of groups) {
-    if (!list.length) continue;
-    const a = S.areas[aid];
-    rows.push(`<tr class="area"><td colspan="8">${a ? `${esc(a.code)} · ${esc(lang === "fi" ? a.name_fi : (a.name_en || a.name_fi))}` : t("area.other")}</td></tr>`);
-    list.forEach(tp => rows.push(topicRow(tp, topicAreas[tp.topic_id] || [], lastNote[tp.topic_id])));
+  if (sortMode === "week") {
+    // chronological: autumn (vko 32–52) first, then spring (vko 1–31); ties by curriculum sequence
+    const list = topics.filter(tp => !tp.archived || showArchived).sort((a, b) => syOrder(a.planned_week) - syOrder(b.planned_week) || a.seq - b.seq);
+    let half = null;
+    list.forEach(tp => {
+      const h = tp.planned_week == null ? "none" : tp.planned_week >= 32 ? "autumn" : "spring";
+      if (h !== half) { half = h; rows.push(`<tr class="area"><td colspan="8">${t("subj.term." + h)}</td></tr>`); }
+      rows.push(topicRow(tp, topicAreas[tp.topic_id] || [], lastNote[tp.topic_id]));
+    });
+  } else {
+    for (const [aid, list] of groups) {
+      if (!list.length) continue;
+      const a = S.areas[aid];
+      rows.push(`<tr class="area"><td colspan="8">${a ? `${esc(a.code)} · ${esc(lang === "fi" ? a.name_fi : (a.name_en || a.name_fi))}` : t("area.other")}</td></tr>`);
+      list.sort((a, b) => syOrder(a.planned_week) - syOrder(b.planned_week) || a.seq - b.seq).forEach(tp => rows.push(topicRow(tp, topicAreas[tp.topic_id] || [], lastNote[tp.topic_id])));
+    }
   }
   $("#view").innerHTML = `
     <div class="plan-head"><h1>${esc(name(subj))}</h1><span class="meta">${esc(lang === "fi" ? subj.name_fi : subj.name_en)} · ${subj.hours_7_9 || ""} h/vko 7–9</span>
-      <label class="check" style="margin-left:auto"><input type="checkbox" id="arch" ${showArchived ? "checked" : ""}> ${t("subj.showArchived")}</label></div>
+      <span class="sort-sw" style="margin-left:auto">${t("subj.sort")}: <button class="btn link ${sortMode === "week" ? "on" : ""}" data-sort="week">${t("subj.sortWeek")}</button><span class="muted">·</span><button class="btn link ${sortMode === "area" ? "on" : ""}" data-sort="area">${t("subj.sortArea")}</button></span>
+      <label class="check"><input type="checkbox" id="arch" ${showArchived ? "checked" : ""}> ${t("subj.showArchived")}</label></div>
     <div class="legend"><span><i class="dot"></i>${t("status.none")}</span><span><i class="dot s-progress"></i>${t("status.progress")}</span><span><i class="dot s-done"></i>${t("status.done")}</span><span><i class="dot s-evidenced"></i>${t("status.evidenced")}</span><span><i class="dot s-attention"></i>${t("status.attention")}</span></div>
     <div class="tablewrap"><table class="smart"><thead><tr><th></th><th>${t("subj.topic")}</th><th>${t("subj.ops")}</th><th>${t("subj.materials")}</th><th>${t("subj.tests")}</th><th>${t("subj.evidence")}</th><th>${t("subj.week")}</th><th>${t("subj.notes")}</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
   $("#arch").onchange = e => { sessionStorage.setItem("ks_arch", e.target.checked ? "1" : "0"); renderSubject(subjectId); };
+  $$("[data-sort]").forEach(b => b.onclick = () => { sessionStorage.setItem("ks_sort", b.dataset.sort); renderSubject(subjectId); });
   $$("tr.topic").forEach(tr => tr.onclick = () => location.hash = `#/subject/${subjectId}/topic/${tr.dataset.id}`);
 }
 function topicRow(tp, areaIds, note) {
@@ -186,7 +202,7 @@ function topicRow(tp, areaIds, note) {
     <td class="status"><span class="stripe s-${tp.status}"></span></td>
     <td><span class="topic-title">${esc(name(tp))}<small lang="${lang === "fi" ? "en" : "fi"}">${esc(lang === "fi" ? tp.title_en : tp.title_fi)}</small></span>${tp.grade_flag ? `<span class="chip flag">${esc(tp.grade_flag)}</span>` : ""}</td>
     <td>${codes}</td><td>${mats}</td><td>${tests}</td><td>${ev}</td>
-    <td class="num">${tp.planned_week || ""}</td>
+    <td class="num">${tp.planned_week ? (tp.planned_week < 32 ? `<span class="wk spring" title="${t("subj.term.spring")}">${tp.planned_week}</span>` : `<span class="wk">${tp.planned_week}</span>`) : ""}</td>
     <td class="note-cell">${note ? esc(note.body.slice(0, 90)) + (note.author_role === "teacher" ? ` <span class="chip warn">${t("note.teacher")}</span>` : "") : ""}</td></tr>`;
 }
 
@@ -247,7 +263,7 @@ async function renderMap(subjectId) {
   const card = (o, st) => `<article class="map-obj ${st.state}">
       <header><span class="chip ops">${esc(o.code)}</span><span class="map-state ${st.state}">${t("map.state." + st.state)}${st.list.length ? ` · ${st.done}/${st.list.length}` : ""}</span>${o.grade_scope ? `<span class="chip">${t("map.gradeScope")} ${esc(o.grade_scope)}</span>` : ""}${(o.transversal || []).map(l => `<span class="chip">${esc(l)}</span>`).join("")}</header>
       <p class="map-text">${esc(lang === "en" && o.text_en ? o.text_en : o.text_fi)}</p>
-      ${st.list.length ? `<ul class="map-topics">${st.list.map(topicLine).join("")}</ul>` : `<p class="muted small">${t("map.uncovered")}</p>`}
+      ${st.list.length ? `<ul class="map-topics">${[...st.list].sort((a, b) => syOrder(a.planned_week) - syOrder(b.planned_week) || a.seq - b.seq).map(topicLine).join("")}</ul>` : `<p class="muted small">${t("map.uncovered")}</p>`}
       ${(o.learning_goal_fi || (o.criteria || []).length) ? `<details class="map-crit"><summary>${t("map.criteria")}</summary>
         ${o.learning_goal_fi ? `<div class="crit"><b>${t("ops.goal")}</b> ${esc(o.learning_goal_fi)}</div>` : ""}
         ${(o.criteria || []).map(c => `<div class="crit"><b>${t("ops.grade")} ${c.grade}</b> ${esc(c.fi)}</div>`).join("")}</details>` : ""}

@@ -202,3 +202,9 @@ td.status{width:10px;padding-right:0}
   .map-crit summary{display:none}
   .map-topics a{color:#000}
 }
+
+/* subject table: sort switch + spring-week marker */
+.sort-sw{font-family:var(--sans);font-size:.82rem;color:var(--ink-3);display:inline-flex;gap:6px;align-items:center}
+.sort-sw .btn.link.on{font-weight:700;text-decoration:underline}
+.wk.spring{color:var(--evid)}
+.wk.spring::after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--evid);margin-left:4px;vertical-align:middle}
