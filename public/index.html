@@ -112,6 +112,7 @@
     <div class="topbar-right">
       <span id="who" class="muted"></span>
       <a class="btn link" href="#/map" data-i18n="nav.map">Tavoitekartta</a>
+      <a class="btn link" href="#/report" data-i18n="nav.report">Lukuvuosiraportti</a>
       <button class="btn link" id="lang-toggle">EN</button>
       <button class="btn link" id="change-pw" data-i18n="nav.changePw">Vaihda salasana</button>
       <button class="btn link" id="logout" data-i18n="nav.logout">Kirjaudu ulos</button>
@@ -128,10 +129,10 @@
         <h2 id="d-title"></h2>
         <div id="d-codes" class="codes"></div>
       </div>
-      <button class="btn icon" id="d-close" aria-label="Close">×</button>
+      <button class="btn icon" id="d-close" aria-label="Sulje" data-i18n-aria="btn.close">×</button>
     </div>
     <div class="drawer-body">
-      <p id="d-summary" class="summary"></p>
+      <p id="d-summary" class="summary"></p><p id="d-summary2" class="summary small muted" hidden></p>
       <details id="d-ops" class="ops"><summary data-i18n="drawer.ops">Opetussuunnitelman tavoitteet</summary><div id="d-ops-body"></div></details>
 
       <section class="block">
@@ -140,7 +141,7 @@
         <form id="f-material" class="row-form family-only">
           <input name="title" placeholder="Otsikko" data-i18n-ph="ph.title" required>
           <input name="url" placeholder="https://…" type="url">
-          <select name="kind"><option value="article">article</option><option value="video">video</option><option value="textbook">textbook</option><option value="worksheet">worksheet</option><option value="sim">simulation</option><option value="course_unit">OSSD/GCSE unit</option><option value="other">other</option></select>
+          <select name="kind"><option value="article" data-i18n="kind.article">artikkeli</option><option value="video" data-i18n="kind.video">video</option><option value="textbook" data-i18n="kind.textbook">oppikirja</option><option value="worksheet" data-i18n="kind.worksheet">tehtävämoniste</option><option value="sim" data-i18n="kind.sim">simulaatio</option><option value="audio" data-i18n="kind.audio">ääni</option><option value="course_unit" data-i18n="kind.course_unit">OSSD/GCSE-jakso</option><option value="other" data-i18n="kind.other">muu</option></select>
           <button class="btn small" type="submit" data-i18n="btn.add">Lisää</button>
         </form>
       </section>
@@ -161,9 +162,9 @@
         <ul id="d-evidence" class="list"></ul>
         <form id="f-evidence" class="row-form family-only">
           <input name="caption" placeholder="Kuvaus" data-i18n-ph="ph.caption" required>
-          <select name="kind"><option value="video">video</option><option value="audio">audio</option><option value="photo">photo</option><option value="document">document</option><option value="certificate">certificate</option><option value="link">link</option></select>
+          <select name="kind"><option value="video" data-i18n="kind.video">video</option><option value="audio" data-i18n="kind.audio">ääni</option><option value="photo" data-i18n="kind.photo">kuva</option><option value="document" data-i18n="kind.document">dokumentti</option><option value="certificate" data-i18n="kind.certificate">todistus</option><option value="link" data-i18n="kind.link">linkki</option></select>
           <input name="file" type="file">
-          <input name="url" placeholder="tai linkki / or link" type="url">
+          <input name="url" placeholder="tai linkki" data-i18n-ph="ph.orLink" type="url">
           <button class="btn small" type="submit" data-i18n="btn.upload">Tallenna</button>
         </form>
       </section>

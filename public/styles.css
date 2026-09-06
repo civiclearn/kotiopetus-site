@@ -208,3 +208,30 @@ td.status{width:10px;padding-right:0}
 .sort-sw .btn.link.on{font-weight:700;text-decoration:underline}
 .wk.spring{color:var(--evid)}
 .wk.spring::after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--evid);margin-left:4px;vertical-align:middle}
+
+/* v0.9: teacher invites on the dashboard + school-year report */
+.teach{margin-top:32px;max-width:760px}
+.teach .list li{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-family:var(--sans);font-size:.9rem}
+.teach .row-form input[type=email]{flex:1 1 200px}
+.summary.small{font-size:.85rem}
+.report{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:24px 28px;max-width:980px}
+.report h2{font-size:1.05rem;margin:26px 0 10px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.report-head{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 24px;margin:0 0 8px;font-family:var(--sans);font-size:.9rem}
+.report-head dt{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)} .report-head dd{margin:2px 0 0}
+.report-table{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:.86rem}
+.report-table th,.report-table td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.report-table th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);background:var(--bg)}
+.report-table td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap} .report-table th.num{text-align:right}
+.report-table tfoot td{font-weight:600;border-top:2px solid var(--ink-3);border-bottom:0}
+.report-table small{display:block;font-size:.76rem}
+.report-notes{padding-left:18px;font-size:.9rem} .report-notes li{margin-bottom:6px}
+.report-parent{min-height:90px;border:1px dashed var(--line);border-radius:6px;padding:10px 12px;white-space:pre-wrap}
+.report-parent:focus{outline:2px solid var(--accent);border-style:solid}
+.report-sign{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px;font-family:var(--sans);font-size:.85rem}
+.report-sign span{display:block;font-weight:600} .report-sign i{display:block;height:44px;border-bottom:1px solid var(--ink)} .report-sign small{color:var(--ink-3)}
+@media (max-width:640px){.report{padding:16px}.report-sign{grid-template-columns:1fr}}
+@media print{
+  .report{border:0;padding:0;max-width:none} .report .tablewrap{overflow:visible;border:0;border-radius:0} .report-table{font-size:.8rem} .report-table th{background:#fff;color:#000} .report-parent{border-color:#999}
+  .report h2{break-after:avoid} .report-table tr{break-inside:avoid} .report-sign{break-inside:avoid}
+  .crumbs{display:none}
+}
