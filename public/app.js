@@ -114,6 +114,8 @@ async function render() {
   if (!S.plan) { $("#view").innerHTML = `<p class="muted">${t("dash.noPlan")}</p>`; return; }
   const qz = location.hash.match(/^#\/quiz\/([0-9a-f-]+)/);
   if (qz) { closeDrawer(); return renderQuiz(qz[1]); }
+  const at = location.hash.match(/^#\/attempt\/([0-9a-f-]+)/);
+  if (at) { closeDrawer(); return renderAttempt(at[1]); }
   if (/^#\/report$/.test(location.hash)) { closeDrawer(); return renderReport(); }
   const mp = location.hash.match(/^#\/map(?:\/(\d+))?$/);
   if (mp) { closeDrawer(); return mp[1] ? renderMap(+mp[1]) : renderMapOverview(); }
@@ -375,6 +377,10 @@ async function renderQuiz(testId) {
       <div class="row"><button class="btn primary" type="submit">${t("quiz.submit")}</button><a class="btn" href="#/subject/${subj.id}/topic/${test.topic_id}">${t("btn.cancel")}</a></div>
     </form>
     <div id="quiz-result" class="result" hidden></div>`;
+  if (S.teacher) { // read-only preview: the teacher can see the questions but never submits
+    $$("#quiz-form input").forEach(i => i.disabled = true); $("#quiz-form button[type=submit]").hidden = true;
+    $("#quiz-form .row").insertAdjacentHTML("afterbegin", `<span class="muted">${t("quiz.previewNote")}</span>`);
+  }
   $("#quiz-form").onsubmit = async e => {
     e.preventDefault();
     const answers = {};
@@ -397,6 +403,40 @@ async function renderQuiz(testId) {
       $$("input", fs).forEach(i => i.disabled = true); });
     $("#quiz-form button[type=submit]").hidden = true; $("#quiz-result").scrollIntoView({ behavior: "smooth" });
   };
+}
+
+// ---------- attempt review ----------
+// Read-only replay of one stored attempt: every question, the answer given, the correct one and the explanation.
+// Works for parent, student and teacher alike (RLS: attempts and questions are readable by the teacher of the family).
+function fmtAnswer(v, q, opts) {
+  if (v === null || v === undefined) return "—";
+  if (typeof v === "object" && !Array.isArray(v)) v = v.value;
+  if (Array.isArray(v)) return q.kind === "multi" ? v.map(j => opts[j] ?? j).join(", ") : String(v[0] ?? "");
+  return q.kind === "mc" ? (opts[v] ?? String(v)) : String(v);
+}
+async function renderAttempt(attemptId) {
+  const { data: at, error } = await sb.from("ks_test_attempts").select("*, ks_tests(id,topic_id,title,pass_pct, ks_quizzes(*, ks_quiz_questions(*)), ks_topics(title_en,title_fi,subject_id))").eq("id", attemptId).single();
+  if (error || !at?.ks_tests) return fail(error || new Error("No attempt"));
+  const test = at.ks_tests, quiz = test.ks_quizzes, qs = (quiz?.ks_quiz_questions || []).sort((a, b) => a.seq - b.seq);
+  const subj = S.subjects.find(s => s.id === test.ks_topics.subject_id);
+  const items = Object.fromEntries(((at.detail && at.detail.items) || []).map(it => [it.question_id, it]));
+  const pass = at.percentage >= (test.pass_pct || quiz?.pass_pct || S.plan.pass_pct);
+  const when = new Date(at.taken_at).toLocaleString(lang === "fi" ? "fi-FI" : "en-GB", { dateStyle: "medium", timeStyle: "short" });
+  crumbs([{ label: t("nav.home"), href: "#/" }, { label: name(subj), href: "#/subject/" + subj.id }, { label: name(test.ks_topics), href: `#/subject/${subj.id}/topic/${test.topic_id}` }, { label: t("attempt.title") }]);
+  const prompt = q => lang === "fi" && q.prompt_fi ? `${esc(q.prompt_fi)}<small>${esc(q.prompt_en)}</small>` : `${esc(q.prompt_en)}${q.prompt_fi ? `<small lang="fi">${esc(q.prompt_fi)}</small>` : ""}`;
+  const opts = q => (lang === "fi" && q.options_fi) ? q.options_fi : q.options;
+  const body = qs.map((q, i) => { const it = items[q.id]; const o = opts(q) || [];
+    const given = it ? (Array.isArray(it.given) ? it.given : [it.given]) : [];
+    const right = it ? (typeof it.answer === "object" && it.answer !== null && !Array.isArray(it.answer) ? [it.answer.value] : Array.isArray(it.answer) ? it.answer : [it.answer]) : [];
+    const choice = (q.kind === "mc" || q.kind === "multi") ? o.map((x, j) => `<div class="opt ${right.includes(j) ? "right" : ""} ${given.includes(j) ? "given" : ""}"><span class="mark">${given.includes(j) ? (right.includes(j) ? "✓" : "✗") : right.includes(j) ? "•" : ""}</span><span>${esc(x)}</span></div>`).join("")
+      : `<div class="opt given"><span class="mark">${it ? (it.correct ? "✓" : "✗") : ""}</span><span><b>${t("attempt.given")}:</b> ${esc(fmtAnswer(it?.given, q, o))}${it && !it.correct ? ` · <b>${t("quiz.answer")}:</b> ${esc(fmtAnswer(it.answer, q, o))}` : ""}</span></div>`;
+    const expl = it ? esc(lang === "fi" && it.explanation_fi ? it.explanation_fi : (it.explanation_en || "")) : "";
+    return `<fieldset class="q ${it ? (it.correct ? "correct" : "wrong") : ""}"><legend><span class="num">${i + 1}.</span> ${prompt(q)}</legend>${choice}${expl ? `<div class="feedback">${expl}</div>` : ""}</fieldset>`; }).join("");
+  $("#view").innerHTML = `
+    <div class="plan-head"><h1>${esc(quiz?.code || "")} · ${esc(quiz ? name(quiz) : test.title)}</h1><span class="meta">${t("attempt.title")} · ${esc(S.student?.first_name || "")} · ${esc(when)}</span></div>
+    <div class="result"><div class="score ${pass ? "ok" : "bad"}"><b>${at.score ?? "—"}/${at.total ?? "—"}</b> · ${at.percentage} % · ${pass ? t("quiz.passed") : t("quiz.failed")}</div></div>
+    ${qs.length && Object.keys(items).length ? `<div class="quiz">${body}</div>` : `<p class="muted">${t("attempt.noDetail")}</p>`}
+    <div class="row"><a class="btn primary" href="#/subject/${subj.id}/topic/${test.topic_id}">${t("quiz.back")}</a></div>`;
 }
 
 // ---------- drawer ----------
@@ -443,16 +483,17 @@ $("#f-material").onsubmit = async e => {
 };
 
 async function loadTests() {
-  const { data } = await sb.from("ks_tests").select("*, ks_quizzes(code,title_en,title_fi,criteria_grade), ks_test_attempts(percentage,score,total,taken_at,source)").eq("topic_id", D.topic_id).order("created_at");
+  const { data } = await sb.from("ks_tests").select("*, ks_quizzes(code,title_en,title_fi,criteria_grade), ks_test_attempts(id,percentage,score,total,taken_at,source,detail)").eq("topic_id", D.topic_id).order("created_at");
   // quiz picker: global quizzes for this topic's template + family quizzes
   const { data: tpl } = await sb.from("ks_topics").select("template_id").eq("id", D.topic_id).single();
   const { data: quizzes } = await sb.from("ks_quizzes").select("id,code,title_en,title_fi,template_id,family_id").or(`template_id.eq.${tpl?.template_id || 0},family_id.eq.${S.family.id}`).order("code");
   const sel = $("#f-test [name=quiz_uuid]"); sel.innerHTML = `<option value="">${t("test.noQuiz")}</option>` + (quizzes || []).map(q => `<option value="${q.id}">${esc(q.code || "")} ${esc(name(q))}</option>`).join("");
   $("#d-tests").innerHTML = (data || []).map(x => { const at = (x.ks_test_attempts || []).sort((a, b) => b.taken_at.localeCompare(a.taken_at)); const best = at.length ? Math.max(...at.map(a => a.percentage)) : null; const pass = x.pass_pct || S.plan.pass_pct;
     return `<li><span class="grow">${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>` : esc(x.title)} ${x.ks_quizzes ? `<span class="muted mono">${esc(x.ks_quizzes.code)}</span>` : ""}</span>
-      ${x.quiz_uuid && isFamily() ? `<a class="btn small primary" href="#/quiz/${x.id}">${t("test.take")}</a>` : ""}
+      ${x.quiz_uuid ? `<a class="btn small ${isFamily() ? "primary" : ""}" href="#/quiz/${x.id}">${isFamily() ? t("test.take") : t("test.preview")}</a>` : ""}
       ${best !== null ? `<span class="chip ${best >= pass ? "ok" : "bad"} num">${t("test.best")} ${best}%</span><span class="muted num">${at.length} ${t("test.attempts")}</span>` : `<span class="muted">—</span>`}
-      ${isFamily() ? `<button class="btn small" data-att="${x.id}">${t("test.logAttempt")}</button><button class="btn link danger small" data-del-test="${x.id}">×</button>` : ""}</li>`; }).join("") || `<li class="muted">—</li>`;
+      ${isFamily() ? `<button class="btn small" data-att="${x.id}">${t("test.logAttempt")}</button><button class="btn link danger small" data-del-test="${x.id}">×</button>` : ""}
+      ${at.length ? `<ul class="attempts">${at.map(a => { const label = `${fmtDate(a.taken_at)} · ${a.score != null ? `${a.score}/${a.total} · ` : ""}${a.percentage} %`; return `<li class="${a.percentage >= pass ? "ok" : "bad"}">${a.detail ? `<a href="#/attempt/${a.id}">${label}</a>` : `<span>${label}</span>`}${a.source === "manual" ? ` <span class="muted">· ${t("test.manual")}</span>` : ""}</li>`; }).join("")}</ul>` : ""}</li>`; }).join("") || `<li class="muted">—</li>`;
   $$("[data-att]").forEach(b => b.onclick = async () => { const v = prompt(t("test.logAttempt") + " (%)"); if (v === null) return; const pct = parseInt(v, 10); if (isNaN(pct)) return;
     const { error } = await sb.from("ks_test_attempts").insert({ family_id: S.family.id, test_id: b.dataset.att, percentage: pct, source: "manual" }); error ? fail(error) : (loadTests(), refresh()); });
   $$("[data-del-test]").forEach(b => b.onclick = async () => { await sb.from("ks_tests").delete().eq("id", b.dataset.delTest); loadTests(); refresh(); });
@@ -473,11 +514,14 @@ async function loadEvidence() {
 }
 $("#f-evidence").onsubmit = async e => {
   e.preventDefault(); const f = new FormData(e.target); const file = f.get("file"); let storage_path = null;
+  const btn = $("button[type=submit]", e.target); if (btn.disabled) return; // ignore a second click while uploading
+  btn.disabled = true; const label = btn.textContent; btn.textContent = t("btn.uploading"); e.target.classList.add("busy");
   try {
     if (file && file.size) { storage_path = `${S.family.id}/${S.plan.id}/${crypto.randomUUID()}-${file.name.replace(/[^\w.\-]+/g, "_")}`; const { error } = await sb.storage.from("ks-evidence").upload(storage_path, file); if (error) throw error; }
     const { error } = await sb.from("ks_evidence").insert({ family_id: S.family.id, plan_id: S.plan.id, topic_id: D.topic_id, subject_id: D.subject_id, kind: f.get("kind"), storage_path, url: f.get("url") || null, caption: f.get("caption"), created_by: S.user.id });
     if (error) throw error; e.target.reset(); toast(t("toast.saved")); loadEvidence(); refresh();
   } catch (err) { fail(err); }
+  finally { btn.disabled = false; btn.textContent = label; e.target.classList.remove("busy"); }
 };
 
 async function loadNotes() {

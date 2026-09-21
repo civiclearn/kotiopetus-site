@@ -157,6 +157,12 @@ td.status{width:10px;padding-right:0}
 .quiz fieldset.correct{border-color:var(--ok);background:var(--ok-soft)}
 .quiz fieldset.wrong{border-color:var(--bad);background:var(--bad-soft)}
 .quiz .feedback{margin-top:8px;font-size:.88rem;color:var(--ink-2)}
+.quiz .opt .mark{display:inline-block;width:1.2em;font-weight:700;flex:none}
+.quiz .opt.right{color:var(--ok)} .quiz .opt.given:not(.right){color:var(--bad)} .quiz .opt.given{font-weight:600}
+.attempts{list-style:none;margin:6px 0 0;padding:0 0 0 2px;width:100%;font-size:.85rem;display:flex;flex-wrap:wrap;gap:4px 14px}
+.attempts li::before{content:"●";font-size:.6em;vertical-align:middle;margin-right:5px;color:var(--bad)} .attempts li.ok::before{color:var(--ok)}
+.attempts a{font-family:var(--mono,monospace)}
+form.busy{opacity:.7} form.busy input,form.busy select{pointer-events:none}
 .result{margin-top:20px;display:flex;flex-direction:column;gap:12px;max-width:760px}
 .result .score{font-family:var(--sans);font-size:1.3rem;padding:14px 18px;border-radius:8px;background:var(--code-bg)}
 .result .score.ok{background:var(--ok-soft);color:var(--ok)} .result .score.bad{background:var(--bad-soft);color:var(--bad)}
