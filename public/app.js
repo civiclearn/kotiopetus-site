@@ -160,12 +160,16 @@ async function loadTeachers() {
   $$("[data-del-inv]").forEach(b => b.onclick = async () => { const { error } = await sb.from("ks_teacher_invites").delete().eq("id", b.dataset.delInv); error ? fail(error) : loadTeachers(); });
 }
 function tile(r) {
-  const worst = r.attention ? "s-attention" : r.in_progress ? "s-progress" : r.done ? "s-done" : "";
-  return `<button class="tile" data-id="${r.subject_id}">
+  const act = (r.in_progress || 0) + (r.attention || 0);
+  const chips = [`<span class="chip ok">${r.done} ${t("dash.done")}</span>`,
+    act ? `<span class="chip warn">${act} ${t("dash.inProgress")}</span>` : "",
+    r.attention ? `<span class="chip bad">${r.attention} ${t("dash.attention")}</span>` : "",
+    `<span class="chip">${r.topics} ${t("dash.topics")}</span>`].join("");
+  return `<button class="tile ${r.attention ? "flag" : r.done === r.topics && r.topics ? "complete" : ""}" data-id="${r.subject_id}">
     <div class="name">${esc(name(r))}</div>
-    <div class="sub">${r.kind === "portfolio" ? t("subj.portfolio") : "OPS " + esc(r.code)}</div>
-    <div class="bar"><i class="p" style="width:${Math.round(100 * ((r.done || 0) + (r.in_progress || 0) + (r.attention || 0)) / (r.topics || 1))}%"></i><i style="width:${r.pct || 0}%"></i></div>
-    <div class="nums"><span class="ok">${r.done} ${t("dash.done")}</span>${(r.in_progress || 0) + (r.attention || 0) ? `<span class="prog">${(r.in_progress || 0) + (r.attention || 0)} ${t("dash.inProgress")}</span>` : ""}${r.attention ? `<span class="att">${r.attention} ${t("dash.attention")}</span>` : ""}<span class="muted">${r.topics} ${t("dash.topics")}</span>${r.minutes ? `<span>${r.minutes} min</span>` : ""}</div></button>`;
+    <div class="sub">${r.kind === "portfolio" ? t("subj.portfolio") : "OPS " + esc(r.code)}${r.minutes ? ` · ${r.minutes} min` : ""}</div>
+    <div class="bar"><i class="p" style="width:${Math.round(100 * ((r.done || 0) + act) / (r.topics || 1))}%"></i><i style="width:${r.pct || 0}%"></i></div>
+    <div class="nums">${chips}</div></button>`;
 }
 // school-year order: autumn weeks (>= 32) come before spring weeks; unplanned topics last
 const syOrder = w => w == null ? 999 : (w >= 32 ? w - 32 : w + 21);
