@@ -72,11 +72,12 @@ window.I18N = {
     "area.other": "Muut",
     "subj.sort": "Järjestys", "subj.sortWeek": "viikko", "subj.sortArea": "sisältöalue", "subj.term.autumn": "Syyslukukausi (vko 32–52)", "subj.term.spring": "Kevätlukukausi (vko 1–31)", "subj.term.none": "Ei viikkoa",
     "nav.map": "Tavoitekartta", "map.title": "Tavoitekartta", "map.dashLink": "Tavoitekartta: tavoitteet, ja mitkä aiheet, testit ja näytöt palvelevat kutakin →",
-    "map.intro": "Opetussuunnitelman tavoitteet (T) oppiaineittain ja se, mitkä tämän lukuvuoden aiheet, testit ja näytöt palvelevat kutakin tavoitetta. Tavoite on toteutunut, kun kaikki sitä palvelevat aiheet on tehty (testi läpäisty tai näyttö tallennettu). Tavoitteet, joille ei ole aiheita tänä lukuvuonna, näytetään sellaisenaan — ne kuuluvat yleensä vuosiluokille 8–9.",
+    "map.intro": "Opetussuunnitelman tavoitteet (T) oppiaineittain ja se, mitkä tämän lukuvuoden aiheet, testit ja näytöt palvelevat kutakin tavoitetta. Tavoite on toteutunut, kun kaikki sitä palvelevat aiheet on tehty (testi läpäisty tai näyttö tallennettu); kun osa aiheista on tehty, tavoite on osittain toteutunut ja palkki täyttyy sen mukaan. Tavoitteet, joille ei ole aiheita tänä lukuvuonna, näytetään sellaisenaan — ne kuuluvat yleensä vuosiluokille 8–9.",
     "map.objectives": "tavoitetta", "map.covered": "aiheita suunniteltu", "map.done": "toteutunut", "map.inProgress": "kesken", "map.inProgressOrPlanned": "kesken tai suunniteltu", "map.uncoveredShort": "ei aiheita tänä vuonna",
-    "map.uncovered": "Ei aiheita tänä lukuvuonna (yleensä vuosiluokat 8–9).", "map.state.done": "toteutunut", "map.state.progress": "kesken", "map.state.planned": "suunniteltu", "map.state.uncovered": "ei tänä vuonna",
+    "map.uncovered": "Ei aiheita tänä lukuvuonna (yleensä vuosiluokat 8–9).", "map.state.done": "toteutunut", "map.state.started": "osittain toteutunut", "map.state.progress": "kesken", "map.state.planned": "suunniteltu", "map.state.uncovered": "ei tänä vuonna",
     "map.test": "testi tekemättä", "map.evidence": "näyttöä", "map.evidenceDue": "näyttö puuttuu", "map.week": "vko", "map.areas": "Sisältöalueet", "map.criteria": "Oppimisen tavoite ja päättöarvioinnin kriteerit",
     "map.gradeScope": "vuosiluokka", "map.print": "Tulosta", "map.toSubject": "Aihetaulukko",
+    "map.started": "osittain toteutunut", "map.objectivesMet": "tavoitetta toteutunut", "map.topicsDone": "aihetta tehty", "map.legendDone": "toteutunut", "map.legendPartial": "osittain toteutunut (aiheita tehty)", "map.legendPlanned": "aiheita suunniteltu",
   },
   en: {
     "l.nav.how": "How it works", "l.nav.teacher": "For the supervising teacher", "l.nav.ops": "Curriculum",
@@ -150,10 +151,11 @@ window.I18N = {
     "area.other": "Other",
     "subj.sort": "Order", "subj.sortWeek": "by week", "subj.sortArea": "by content area", "subj.term.autumn": "Autumn term (wk 32–52)", "subj.term.spring": "Spring term (wk 1–31)", "subj.term.none": "No week set",
     "nav.map": "Objective map", "map.title": "Objective map", "map.dashLink": "Objective map: curriculum objectives and which topics, tests and evidence serve each →",
-    "map.intro": "Curriculum objectives (T) by subject, and which of this year's topics, tests and evidence serve each one. An objective is met when every topic serving it is done (test passed or evidence uploaded). Objectives with no topics this year are shown as such — they usually belong to grades 8–9.",
+    "map.intro": "Curriculum objectives (T) by subject, and which of this year's topics, tests and evidence serve each one. An objective is met when every topic serving it is done (test passed or evidence uploaded); when some of its topics are done it is partly met and the bar fills accordingly. Objectives with no topics this year are shown as such — they usually belong to grades 8–9.",
     "map.objectives": "objectives", "map.covered": "with topics planned", "map.done": "met", "map.inProgress": "in progress", "map.inProgressOrPlanned": "in progress or planned", "map.uncoveredShort": "no topics this year",
-    "map.uncovered": "No topics this school year (usually grades 8–9).", "map.state.done": "met", "map.state.progress": "in progress", "map.state.planned": "planned", "map.state.uncovered": "not this year",
+    "map.uncovered": "No topics this school year (usually grades 8–9).", "map.state.done": "met", "map.state.started": "partly met", "map.state.progress": "in progress", "map.state.planned": "planned", "map.state.uncovered": "not this year",
     "map.test": "test pending", "map.evidence": "evidence", "map.evidenceDue": "evidence due", "map.week": "wk", "map.areas": "Content areas", "map.criteria": "Learning goal and final assessment criteria",
     "map.gradeScope": "grade", "map.print": "Print", "map.toSubject": "Topic table",
+    "map.started": "partly met", "map.objectivesMet": "objectives met", "map.topicsDone": "topics done", "map.legendDone": "met", "map.legendPartial": "partly met (topics done)", "map.legendPlanned": "topics planned",
   }
 };

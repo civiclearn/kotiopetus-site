@@ -1,13 +1,13 @@
 :root{
   --bg:#F5F7F6; --surface:#FFFFFF; --ink:#1B2430; --ink-2:#4A5563; --ink-3:#7C8794; --line:#D9DFE3;
   --accent:#1F5F8B; --accent-soft:#E3EEF6;
-  --ok:#2E7D4F; --ok-soft:#DFF0E5; --warn:#B8811A; --warn-soft:#FBEFD6; --bad:#B4432F; --bad-soft:#F8E1DC;
+  --ok:#2E7D4F; --ok-mid:#7DBD97; --ok-soft:#DFF0E5; --warn:#B8811A; --warn-soft:#FBEFD6; --bad:#B4432F; --bad-soft:#F8E1DC;
   --none:#9AA3AD; --none-soft:#ECEFF1; --evid:#5A4FA8; --evid-soft:#E8E5F6; --code-bg:#EEF1F3;
   --sans:"Archivo","Helvetica Neue",Arial,sans-serif; --serif:"Source Serif 4",Georgia,serif; --mono:"IBM Plex Mono",monospace;
 }
 @media (prefers-color-scheme: dark){
   :root{ --bg:#141A21; --surface:#1C242D; --ink:#E6EAEE; --ink-2:#B4BCC5; --ink-3:#7F8993; --line:#2E3842;
-    --accent:#7FB4DC; --accent-soft:#1E3345; --ok:#6CC28F; --ok-soft:#1E3A2B; --warn:#E2B04E; --warn-soft:#3E3117;
+    --accent:#7FB4DC; --accent-soft:#1E3345; --ok:#6CC28F; --ok-mid:#3F7F5A; --ok-soft:#1E3A2B; --warn:#E2B04E; --warn-soft:#3E3117;
     --bad:#E7826F; --bad-soft:#452420; --none:#7F8993; --none-soft:#252E37; --evid:#B0A6EE; --evid-soft:#2B2745; --code-bg:#232C35; }
 }
 *{box-sizing:border-box}
@@ -180,15 +180,20 @@ form.busy{opacity:.7} form.busy input,form.busy select{pointer-events:none}
 .map-name small{display:block;font-weight:400;font-size:.78rem;color:var(--ink-3)}
 .map-bar{position:relative;height:8px;background:var(--none-soft);border-radius:4px;overflow:hidden}
 .map-bar i{position:absolute;left:0;top:0;height:100%;display:block}
-.map-bar i.c{background:var(--warn-soft)} .map-bar i.d{background:var(--ok)}
+.map-bar i.c{background:var(--warn-soft)} .map-bar i.p{background:var(--ok-mid,#8CC9A3)} .map-bar i.d{background:var(--ok)}
+.map-legend{display:flex;gap:4px 14px;flex-wrap:wrap;align-items:center;font-family:var(--sans);font-size:.78rem;color:var(--ink-3);margin:-6px 0 12px}
+.map-legend i{display:inline-block;width:14px;height:8px;border-radius:3px;margin-right:4px;vertical-align:middle}
+.map-legend i.c{background:var(--warn-soft)} .map-legend i.p{background:var(--ok-mid,#8CC9A3)} .map-legend i.d{background:var(--ok)}
+.map-mini{display:inline-block;width:64px;height:6px;border-radius:3px;background:var(--none-soft);overflow:hidden;vertical-align:middle}
+.map-mini i{display:block;height:100%;background:var(--ok)}
 .map-nums{display:flex;gap:12px;font-family:var(--mono);font-size:.76rem;color:var(--ink-2);font-variant-numeric:tabular-nums;flex-wrap:wrap}
-.map-nums .ok{color:var(--ok)} .map-nums .warn{color:var(--warn)}
+.map-nums .ok{color:var(--ok)} .map-nums .ok2{color:var(--ok-mid,#5FA87C)} .map-nums .warn{color:var(--warn)}
 .map-grid{display:flex;flex-direction:column;gap:10px}
 .map-obj{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--none);border-radius:8px;padding:12px 16px 10px}
-.map-obj.done{border-left-color:var(--ok)} .map-obj.progress{border-left-color:var(--warn)} .map-obj.planned{border-left-color:var(--accent)} .map-obj.uncovered{border-left-color:var(--line);opacity:.75}
+.map-obj.done{border-left-color:var(--ok)} .map-obj.started{border-left-color:var(--ok-mid,#8CC9A3)} .map-obj.progress{border-left-color:var(--warn)} .map-obj.planned{border-left-color:var(--accent)} .map-obj.uncovered{border-left-color:var(--line);opacity:.75}
 .map-obj header{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;margin-bottom:4px}
 .map-state{font-family:var(--sans);font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
-.map-state.done{color:var(--ok)} .map-state.progress{color:var(--warn)} .map-state.planned{color:var(--accent)}
+.map-state.done{color:var(--ok)} .map-state.started{color:var(--ok-mid,#5FA87C)} .map-state.progress{color:var(--warn)} .map-state.planned{color:var(--accent)}
 .map-text{margin:2px 0 8px;font-size:.95rem}
 .map-topics{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
 .map-topics li{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-family:var(--sans);font-size:.86rem}

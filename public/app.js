@@ -245,7 +245,7 @@ async function loadCoverage(subjectId) {
   const served = {}; (links || []).forEach(l => { if (byTopic[l.topic_id]) (served[l.objective_id] ||= []).push(byTopic[l.topic_id]); });
   return { topics, objectives: (objs || []).filter(o => scopeOk(o.grade_scope, S.plan.grade)), served };
 }
-const objStat = (o, served) => { const list = (served[o.id] || []).sort((a, b) => a.seq - b.seq); const done = list.filter(x => x.status === "done" || x.status === "evidenced").length; const ev = list.reduce((a, x) => a + (x.evidence || 0), 0); return { list, done, ev, state: !list.length ? "uncovered" : done === list.length ? "done" : done || list.some(x => x.status === "progress" || x.status === "attention") ? "progress" : "planned" }; };
+const objStat = (o, served) => { const list = (served[o.id] || []).sort((a, b) => a.seq - b.seq); const done = list.filter(x => x.status === "done" || x.status === "evidenced").length; const ev = list.reduce((a, x) => a + (x.evidence || 0), 0); const active = list.filter(x => x.status === "progress" || x.status === "attention").length; return { list, done, ev, active, frac: list.length ? done / list.length : 0, state: !list.length ? "uncovered" : done === list.length ? "done" : done ? "started" : active ? "progress" : "planned" }; };
 
 async function renderMapOverview() {
   crumbs([{ label: t("nav.home"), href: "#/" }, { label: t("nav.map") }]);
@@ -260,7 +260,8 @@ async function renderMapOverview() {
       <div class="map-bar"><i class="c" style="width:${pct}%"></i><i class="d" style="width:${Math.round(100 * done / objs.length)}%"></i></div>
       <div class="map-nums"><span class="ok">${done} ${t("map.done")}</span><span class="warn">${partial} ${t("map.inProgress")}</span><span>${covered}/${objs.length} ${t("map.covered")}</span></div></a>`;
   }).join("");
-  const all = cov.objectives.length, allCov = cov.objectives.filter(o => (cov.served[o.id] || []).length).length, allDone = cov.objectives.filter(o => objStat(o, cov.served).state === "done").length;
+  const allSt = cov.objectives.map(o => objStat(o, cov.served)), all = allSt.length, allCov = allSt.filter(x => x.list.length).length, allDone = allSt.filter(x => x.state === "done").length, allStarted = allSt.filter(x => x.state === "started").length;
+  const allTopics = cov.topics.length, allTopicsDone = cov.topics.filter(x => x.status === "done" || x.status === "evidenced").length;
   $("#view").innerHTML = `
     <div class="plan-head"><h1>${t("map.title")}</h1><span class="meta">${esc(S.student?.first_name || "")} · ${S.plan.grade}. ${t("dash.plan")} · ${esc(S.plan.school_year)} · POPS 2014</span>
       <button class="btn small no-print" style="margin-left:auto" onclick="window.print()">${t("map.print")}</button></div>
@@ -278,12 +279,12 @@ async function renderMap(subjectId) {
     cov.topics.length ? sb.from("ks_topic_areas").select("topic_id,content_area_id").in("topic_id", cov.topics.map(x => x.topic_id)) : { data: [] }]);
   const areaCount = {}; (ta || []).forEach(x => areaCount[x.content_area_id] = (areaCount[x.content_area_id] || 0) + 1);
   const objs = cov.objectives.sort((a, b) => objNum(a.code) - objNum(b.code));
-  const stats = objs.map(o => objStat(o, cov.served));
+  const stats = objs.map(o => objStat(o, cov.served)); const started = stats.filter(x => x.state === "started").length;
   const done = stats.filter(x => x.state === "done").length, covered = stats.filter(x => x.list.length).length;
   const topicLine = tp => `<li><a href="#/subject/${subjectId}/topic/${tp.topic_id}"><i class="dot s-${tp.status}"></i><span class="tt">${esc(name(tp))}</span></a>
       <span class="map-meta">${tp.attempts ? `<span class="chip ${tp.passes ? "ok" : "bad"} num">${tp.best_pct}%</span>` : tp.assessment === "test" ? `<span class="chip">${t("map.test")}</span>` : ""}${tp.evidence ? `<span class="chip evid">${tp.evidence} ${t("map.evidence")}</span>` : tp.assessment === "evidence" ? `<span class="chip">${t("map.evidenceDue")}</span>` : ""}${tp.planned_week ? `<span class="muted mono">${t("map.week")} ${tp.planned_week}</span>` : ""}${tp.grade_flag ? `<span class="chip flag">${esc(tp.grade_flag)}</span>` : ""}</span></li>`;
   const card = (o, st) => `<article class="map-obj ${st.state}">
-      <header><span class="chip ops">${esc(o.code)}</span><span class="map-state ${st.state}">${t("map.state." + st.state)}${st.list.length ? ` · ${st.done}/${st.list.length}` : ""}</span>${o.grade_scope ? `<span class="chip">${t("map.gradeScope")} ${esc(o.grade_scope)}</span>` : ""}${(o.transversal || []).map(l => `<span class="chip">${esc(l)}</span>`).join("")}</header>
+      <header><span class="chip ops">${esc(o.code)}</span><span class="map-state ${st.state}">${t("map.state." + st.state)}${st.list.length ? ` · ${st.done}/${st.list.length}` : ""}</span>${st.list.length ? `<span class="map-mini"><i style="width:${Math.round(100 * st.frac)}%"></i></span>` : ""}${o.grade_scope ? `<span class="chip">${t("map.gradeScope")} ${esc(o.grade_scope)}</span>` : ""}${(o.transversal || []).map(l => `<span class="chip">${esc(l)}</span>`).join("")}</header>
       <p class="map-text">${esc(lang === "en" && o.text_en ? o.text_en : o.text_fi)}</p>
       ${st.list.length ? `<ul class="map-topics">${[...st.list].sort((a, b) => syOrder(a.planned_week) - syOrder(b.planned_week) || a.seq - b.seq).map(topicLine).join("")}</ul>` : `<p class="muted small">${t("map.uncovered")}</p>`}
       ${(o.learning_goal_fi || (o.criteria || []).length) ? `<details class="map-crit"><summary>${t("map.criteria")}</summary>
@@ -293,7 +294,7 @@ async function renderMap(subjectId) {
   $("#view").innerHTML = `
     <div class="plan-head"><h1>${t("map.title")} · ${esc(name(subj))}</h1><span class="meta">${esc(lang === "fi" ? subj.name_fi : subj.name_en)} · ${esc(S.student?.first_name || "")} · ${S.plan.grade}. ${t("dash.plan")} · ${esc(S.plan.school_year)}</span>
       <span class="no-print" style="margin-left:auto;display:flex;gap:10px"><a class="btn small" href="#/subject/${subjectId}">${t("map.toSubject")}</a><button class="btn small" onclick="window.print()">${t("map.print")}</button></span></div>
-    <div class="map-total"><b>${done}</b>/${objs.length} ${t("map.done")} · <b>${covered}</b>/${objs.length} ${t("map.covered")}${(areas || []).length ? ` · ${t("map.areas")}: ${(areas || []).map(a => `<span class="chip ops" title="${esc(lang === "fi" ? a.name_fi : (a.name_en || a.name_fi))}">${esc(a.code)} <span class="num">${areaCount[a.id] || 0}</span></span>`).join("")}` : ""}</div>
+    <div class="map-total"><b>${done}</b>/${objs.length} ${t("map.done")} · <b>${started}</b> ${t("map.started")} · <b>${covered}</b>/${objs.length} ${t("map.covered")}${(areas || []).length ? ` · ${t("map.areas")}: ${(areas || []).map(a => `<span class="chip ops" title="${esc(lang === "fi" ? a.name_fi : (a.name_en || a.name_fi))}">${esc(a.code)} <span class="num">${areaCount[a.id] || 0}</span></span>`).join("")}` : ""}</div>
     <div class="legend"><span><i class="dot"></i>${t("status.none")}</span><span><i class="dot s-progress"></i>${t("status.progress")}</span><span><i class="dot s-done"></i>${t("status.done")}</span><span><i class="dot s-evidenced"></i>${t("status.evidenced")}</span><span><i class="dot s-attention"></i>${t("status.attention")}</span></div>
     <div class="map-grid">${objs.map((o, i) => card(o, stats[i])).join("")}</div>`;
 }
