@@ -246,6 +246,19 @@ function termElapsed(term) {
   if (term === "autumn") return m >= 8 ? Math.min(1, Math.max(0, (wk - 32) / 20)) : 1;            // Jan–Jul: autumn is behind us
   return m >= 8 ? 0 : Math.min(1, Math.max(0, (wk - 1) / 22));                                   // spring: wk 1 → ~23 (early June)
 }
+// Verdict: compare topics done with topics whose planned week has already passed (= what the plan expected by now).
+// Tolerance = max(1, 10 % of the term's topics). Beyond −25 % it is "seriously delayed".
+function pace(list, term) {
+  const wk = isoWeek(new Date()), el = termElapsed(term);
+  const done = list.filter(x => x.status === "done" || x.status === "evidenced").length;
+  const expected = el >= 1 ? list.length : el <= 0 ? 0 : list.filter(x => syOrder(x.planned_week) < syOrder(wk)).length;
+  const tol = Math.max(1, Math.round(list.length * 0.1)), delta = done - expected;
+  const key = !list.length ? "none" : el <= 0 ? "none" : delta < -Math.max(tol, list.length * 0.25) ? "late2" : delta < -tol ? "late" : delta > tol ? "ahead" : "ontime";
+  const weeksLeft = term === "autumn" ? Math.max(0, 52 - wk) : Math.max(0, 23 - wk);
+  const perWeek = el > 0 && el < 1 && weeksLeft ? Math.ceil((list.length - done) / weeksLeft * 10) / 10 : null;
+  return { done, expected, delta, key, perWeek, weeksLeft };
+}
+const paceChip = p => p.key === "none" ? "" : `<span class="pace ${p.key}">${t("pace." + p.key)}</span>`;
 async function renderTerms() {
   crumbs([{ label: t("nav.home"), href: "#/" }, { label: t("nav.terms") }]);
   const { data: topics, error } = await sb.from("ks_topic_status").select("topic_id,subject_id,planned_week,status,archived").eq("plan_id", S.plan.id).eq("archived", false); if (error) return fail(error);
@@ -254,12 +267,13 @@ async function renderTerms() {
   const stack = (c, big) => { const p = k => c.n ? Math.round(100 * c[k] / c.n) : 0; return `<div class="tbar ${big ? "big" : ""}"><i class="d" style="width:${p("done")}%"></i><i class="a" style="left:${p("done")}%;width:${p("active")}%"></i></div>`; };
   const card = term => {
     const list = (topics || []).filter(x => termOf(x.planned_week) === term), c = count(list), el = Math.round(100 * termElapsed(term));
-    const pctDone = c.n ? Math.round(100 * c.done / c.n) : 0;
-    const subj = S.subjects.map(sb_ => { const l = list.filter(x => x.subject_id === sb_.id); if (!l.length) return ""; const cc = count(l);
-      return `<a class="trow" href="#/subject/${sb_.id}"><span class="tname">${esc(name(sb_))}</span>${stack(cc)}<span class="tnum mono"><b class="ok">${cc.done}</b>${cc.active ? `<span class="warn">+${cc.active}</span>` : ""}/${cc.n}</span></a>`; }).join("");
+    const pctDone = c.n ? Math.round(100 * c.done / c.n) : 0, pc = pace(list, term);
+    const subj = S.subjects.map(sb_ => { const l = list.filter(x => x.subject_id === sb_.id); if (!l.length) return ""; const cc = count(l), pp = pace(l, term);
+      return `<a class="trow" href="#/subject/${sb_.id}"><span class="tname"><i class="pdot ${pp.key}" title="${pp.key === "none" ? "" : t("pace." + pp.key)}"></i>${esc(name(sb_))}</span>${stack(cc)}<span class="tnum mono"><b class="ok">${cc.done}</b>${cc.active ? `<span class="warn">+${cc.active}</span>` : ""}/${cc.n}</span></a>`; }).join("");
     return `<section class="term ${el >= 100 ? "past" : el > 0 ? "now" : "future"}">
       <header><h2>${t("terms." + term)}</h2><span class="muted">${t("terms." + term + "Weeks")}</span><span class="chip ${el >= 100 ? "" : el > 0 ? "ok" : ""}">${el >= 100 ? t("terms.finished") : el > 0 ? `${t("terms.current")} · ${el} %` : t("terms.upcoming")}</span></header>
-      <div class="tbig"><b>${pctDone} %</b><span>${c.done}/${c.n} ${t("dash.topicsDone")}${c.active ? ` · ${c.active} ${t("terms.underWay")}` : ""}</span></div>
+      <div class="tbig"><b>${pctDone} %</b><span>${c.done}/${c.n} ${t("dash.topicsDone")}${c.active ? ` · ${c.active} ${t("terms.underWay")}` : ""}</span>${paceChip(pc)}</div>
+      ${pc.key !== "none" ? `<p class="pace-note">${t("terms.expected")} <b>${pc.expected}</b> · ${pc.delta === 0 ? t("terms.onPlan") : pc.delta > 0 ? `<b class="ok">+${pc.delta}</b> ${t("terms.aheadOf")}` : `<b class="bad">${pc.delta}</b> ${t("terms.behind")}`}${pc.perWeek != null ? ` · ${t("terms.needs")} <b>${pc.perWeek}</b> ${t("terms.perWeek")} (${pc.weeksLeft} ${t("terms.weeksLeft")})` : ""}</p>` : ""}
       <div class="tbar-wrap">${stack(c, true)}${el > 0 && el < 100 ? `<i class="tick" style="left:${el}%" title="${t("terms.today")}"></i>` : ""}</div>
       <div class="trows">${subj}</div></section>`;
   };
