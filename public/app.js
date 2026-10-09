@@ -131,11 +131,15 @@ async function renderDashboard() {
   const { data: prog, error } = await sb.from("ks_subject_progress").select("*").eq("plan_id", S.plan.id).order("sort"); if (error) return fail(error);
   S.progress = prog;
   const wk = isoWeek(new Date());
-  const { data: week } = await sb.from("ks_topic_status").select("topic_id,subject_id,title_fi,title_en,status,planned_week").eq("plan_id", S.plan.id).eq("planned_week", wk).eq("archived", false);
+  const { data: allT } = await sb.from("ks_topic_status").select("topic_id,subject_id,title_fi,title_en,status,planned_week,passes,evidence,attempts").eq("plan_id", S.plan.id).eq("archived", false);
+  const week = (allT || []).filter(x => x.planned_week === wk);
   const totalMin = prog.reduce((a, r) => a + (r.minutes || 0), 0);
+  const tot = { topics: (allT || []).length, done: 0, started: 0, tests: 0, ev: 0 };
+  (allT || []).forEach(x => { if (x.status === "done" || x.status === "evidenced") tot.done++; else if (x.status === "progress" || x.status === "attention") tot.started++; tot.tests += x.passes || 0; tot.ev += x.evidence || 0; });
   $("#view").innerHTML = `
     <div class="plan-head"><h1>${esc(S.student?.first_name || "")} · ${S.plan.grade}. ${t("dash.plan")}</h1>
       <span class="meta">${t("dash.year")} ${esc(S.plan.school_year)} · POPS 2014 · ${totalMin} ${t("dash.minutes")}${isFamily() && S.profile.role === "parent" ? ` · ${t("dash.joinCode")}: <span class="mono">${esc(S.family.join_code)}</span>` : ""}</span></div>
+    <div class="stats"><div><b>${tot.done}</b><span>/${tot.topics} ${t("dash.topicsDone")}</span></div><div><b>${tot.tests}</b><span>${t("dash.testsPassed")}</span></div><div><b>${tot.ev}</b><span>${t("dash.evidence")}</span></div><div><b>${tot.started}</b><span>${t("dash.started")}</span></div>${totalMin ? `<div><b>${totalMin}</b><span>${t("dash.minutes")}</span></div>` : ""}</div>
     <div class="tiles">${prog.map(r => tile(r)).join("")}</div>
     <p class="map-link"><a href="#/map">${t("map.dashLink")}</a><br><a href="#/report">${t("report.dashLink")}</a></p>
     <div class="section-title"><h2>${t("dash.week")}</h2><span class="muted mono">${t("map.week")} ${wk}</span></div>
@@ -160,8 +164,8 @@ function tile(r) {
   return `<button class="tile" data-id="${r.subject_id}">
     <div class="name">${esc(name(r))}</div>
     <div class="sub">${r.kind === "portfolio" ? t("subj.portfolio") : "OPS " + esc(r.code)}</div>
-    <div class="bar"><i style="width:${r.pct || 0}%"></i></div>
-    <div class="nums"><span>${r.done}/${r.topics} ${t("dash.done")}</span>${r.attention ? `<span class="att">${r.attention} ${t("dash.attention")}</span>` : ""}${r.minutes ? `<span>${r.minutes} min</span>` : ""}</div></button>`;
+    <div class="bar"><i class="p" style="width:${Math.round(100 * ((r.done || 0) + (r.in_progress || 0) + (r.attention || 0)) / (r.topics || 1))}%"></i><i style="width:${r.pct || 0}%"></i></div>
+    <div class="nums"><span class="ok">${r.done} ${t("dash.done")}</span>${(r.in_progress || 0) + (r.attention || 0) ? `<span class="prog">${(r.in_progress || 0) + (r.attention || 0)} ${t("dash.inProgress")}</span>` : ""}${r.attention ? `<span class="att">${r.attention} ${t("dash.attention")}</span>` : ""}<span class="muted">${r.topics} ${t("dash.topics")}</span>${r.minutes ? `<span>${r.minutes} min</span>` : ""}</div></button>`;
 }
 // school-year order: autumn weeks (>= 32) come before spring weeks; unplanned topics last
 const syOrder = w => w == null ? 999 : (w >= 32 ? w - 32 : w + 21);

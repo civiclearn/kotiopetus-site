@@ -90,7 +90,11 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .bar{height:6px;background:var(--none-soft);border-radius:3px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--ok)}
 .tile .nums{display:flex;gap:12px;font-family:var(--mono);font-size:.78rem;color:var(--ink-2);font-variant-numeric:tabular-nums}
-.tile .nums .att{color:var(--bad)}
+.tile .nums .att{color:var(--bad)} .tile .nums .ok{color:var(--ok)} .tile .nums .prog{color:var(--warn)}
+.tile .bar{position:relative} .tile .bar i{position:absolute;left:0;top:0} .tile .bar i.p{background:var(--warn-soft)}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 14px}
+.stats div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 14px;display:flex;align-items:baseline;gap:6px;font-family:var(--sans)}
+.stats b{font-size:1.4rem;color:var(--ok);font-variant-numeric:tabular-nums} .stats span{font-size:.8rem;color:var(--ink-2)}
 .section-title{margin:32px 0 10px;display:flex;align-items:baseline;gap:12px}
 
 /* subject table */
