@@ -117,6 +117,7 @@ async function render() {
   const at = location.hash.match(/^#\/attempt\/([0-9a-f-]+)/);
   if (at) { closeDrawer(); return renderAttempt(at[1]); }
   if (/^#\/report$/.test(location.hash)) { closeDrawer(); return renderReport(); }
+  if (/^#\/terms$/.test(location.hash)) { closeDrawer(); return renderTerms(); }
   const mp = location.hash.match(/^#\/map(?:\/(\d+))?$/);
   if (mp) { closeDrawer(); return mp[1] ? renderMap(+mp[1]) : renderMapOverview(); }
   const m = location.hash.match(/^#\/subject\/(\d+)(?:\/topic\/([0-9a-f-]+))?/);
@@ -141,7 +142,7 @@ async function renderDashboard() {
       <span class="meta">${t("dash.year")} ${esc(S.plan.school_year)} · POPS 2014 · ${totalMin} ${t("dash.minutes")}${isFamily() && S.profile.role === "parent" ? ` · ${t("dash.joinCode")}: <span class="mono">${esc(S.family.join_code)}</span>` : ""}</span></div>
     <div class="stats"><div><b>${tot.done}</b><span>/${tot.topics} ${t("dash.topicsDone")}</span></div><div><b>${tot.tests}</b><span>${t("dash.testsPassed")}</span></div><div><b>${tot.ev}</b><span>${t("dash.evidence")}</span></div><div><b>${tot.started}</b><span>${t("dash.started")}</span></div>${totalMin ? `<div><b>${totalMin}</b><span>${t("dash.minutes")}</span></div>` : ""}</div>
     <div class="tiles">${prog.map(r => tile(r)).join("")}</div>
-    <p class="map-link"><a href="#/map">${t("map.dashLink")}</a><br><a href="#/report">${t("report.dashLink")}</a></p>
+    <p class="map-link"><a href="#/terms">${t("terms.dashLink")}</a><br><a href="#/map">${t("map.dashLink")}</a><br><a href="#/report">${t("report.dashLink")}</a></p>
     <div class="section-title"><h2>${t("dash.week")}</h2><span class="muted mono">${t("map.week")} ${wk}</span></div>
     ${week && week.length ? `<ul class="week-list">${week.map(w => `<li onclick="location.hash='#/subject/${w.subject_id}/topic/${w.topic_id}'"><i class="dot s-${w.status}"></i>${esc(name(w))}<span class="muted">· ${esc(name(S.subjects.find(s => s.id === w.subject_id) || {}))}</span></li>`).join("")}</ul>` : `<p class="muted">${t("dash.noWeek")}</p>`}
     ${S.profile.role === "parent" ? `<section class="teach"><div class="section-title"><h2>${t("teach.title")}</h2></div><p class="muted small">${t("teach.intro")}</p><ul id="teach-list" class="list"></ul>
@@ -234,6 +235,42 @@ function topicRow(tp, areaIds, note) {
     <td>${codes}</td><td>${mats}</td><td>${tests}</td><td>${ev}</td>
     <td class="num">${tp.planned_week ? (tp.planned_week < 32 ? `<span class="wk spring" title="${t("subj.term.spring")}">${tp.planned_week}</span>` : `<span class="wk">${tp.planned_week}</span>`) : ""}</td>
     <td class="note-cell">${note ? esc(note.body.slice(0, 90)) + (note.author_role === "teacher" ? ` <span class="chip warn">${t("note.teacher")}</span>` : "") : ""}</td></tr>`;
+}
+
+// ---------- Terms (Lukukaudet) ----------
+// Coarse view: topics grouped by the term their planned week falls in. Autumn = wk 32–52, spring = wk 1–31.
+// A tick on each bar marks how far into the term today is, so "are we on track" is readable at a glance.
+const termOf = w => w == null ? null : w >= 32 ? "autumn" : "spring";
+function termElapsed(term) {
+  const wk = isoWeek(new Date()), m = new Date().getMonth() + 1;
+  if (term === "autumn") return m >= 8 ? Math.min(1, Math.max(0, (wk - 32) / 20)) : 1;            // Jan–Jul: autumn is behind us
+  return m >= 8 ? 0 : Math.min(1, Math.max(0, (wk - 1) / 22));                                   // spring: wk 1 → ~23 (early June)
+}
+async function renderTerms() {
+  crumbs([{ label: t("nav.home"), href: "#/" }, { label: t("nav.terms") }]);
+  const { data: topics, error } = await sb.from("ks_topic_status").select("topic_id,subject_id,planned_week,status,archived").eq("plan_id", S.plan.id).eq("archived", false); if (error) return fail(error);
+  const bucket = x => x.status === "done" || x.status === "evidenced" ? "done" : x.status === "progress" || x.status === "attention" ? "active" : "none";
+  const count = list => { const c = { done: 0, active: 0, none: 0, n: list.length }; list.forEach(x => c[bucket(x)]++); return c; };
+  const stack = (c, big) => { const p = k => c.n ? Math.round(100 * c[k] / c.n) : 0; return `<div class="tbar ${big ? "big" : ""}"><i class="d" style="width:${p("done")}%"></i><i class="a" style="left:${p("done")}%;width:${p("active")}%"></i></div>`; };
+  const card = term => {
+    const list = (topics || []).filter(x => termOf(x.planned_week) === term), c = count(list), el = Math.round(100 * termElapsed(term));
+    const pctDone = c.n ? Math.round(100 * c.done / c.n) : 0;
+    const subj = S.subjects.map(sb_ => { const l = list.filter(x => x.subject_id === sb_.id); if (!l.length) return ""; const cc = count(l);
+      return `<a class="trow" href="#/subject/${sb_.id}"><span class="tname">${esc(name(sb_))}</span>${stack(cc)}<span class="tnum mono"><b class="ok">${cc.done}</b>${cc.active ? `<span class="warn">+${cc.active}</span>` : ""}/${cc.n}</span></a>`; }).join("");
+    return `<section class="term ${el >= 100 ? "past" : el > 0 ? "now" : "future"}">
+      <header><h2>${t("terms." + term)}</h2><span class="muted">${t("terms." + term + "Weeks")}</span><span class="chip ${el >= 100 ? "" : el > 0 ? "ok" : ""}">${el >= 100 ? t("terms.finished") : el > 0 ? `${t("terms.current")} · ${el} %` : t("terms.upcoming")}</span></header>
+      <div class="tbig"><b>${pctDone} %</b><span>${c.done}/${c.n} ${t("dash.topicsDone")}${c.active ? ` · ${c.active} ${t("terms.underWay")}` : ""}</span></div>
+      <div class="tbar-wrap">${stack(c, true)}${el > 0 && el < 100 ? `<i class="tick" style="left:${el}%" title="${t("terms.today")}"></i>` : ""}</div>
+      <div class="trows">${subj}</div></section>`;
+  };
+  const unplanned = (topics || []).filter(x => x.planned_week == null).length;
+  $("#view").innerHTML = `
+    <div class="plan-head"><h1>${t("terms.title")}</h1><span class="meta">${esc(S.student?.first_name || "")} · ${S.plan.grade}. ${t("dash.plan")} · ${esc(S.plan.school_year)}</span>
+      <button class="btn small no-print" style="margin-left:auto" onclick="window.print()">${t("map.print")}</button></div>
+    <p class="summary map-intro">${t("terms.intro")}</p>
+    <div class="map-legend"><i class="d"></i>${t("status.done")} <i class="p"></i>${t("terms.underWay")} <i class="c"></i>${t("status.none")} <i class="tick-sample"></i>${t("terms.today")}</div>
+    <div class="terms">${card("autumn")}${card("spring")}</div>
+    ${unplanned ? `<p class="muted small">${unplanned} ${t("terms.unplanned")}</p>` : ""}`;
 }
 
 // ---------- OPS map (Tavoitekartta) ----------
